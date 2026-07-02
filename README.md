@@ -5,9 +5,9 @@ Everything runs on **one Railway service**: a Node/Express + SQLite backend that
 the public site, the staff/owner admin, and the CRM — one login, one database, one deploy.
 
 ## Status — build in progress
-- [x] **Phase 1 · Step 1** — server, SQLite schema, two-role auth, vehicle CRUD ← *you are here*
-- [ ] Phase 1 · Step 2 — public site (reuse black/red/chrome design) + inventory grid
-- [ ] Steps 3–14 — detail modal, image upload, VIN decode, financing, contact, documents (window sticker / BOS / waiver), auto-recovery, docs
+- [x] Phase 1 · Step 1 — server, SQLite schema, two-role auth, vehicle CRUD
+- [x] **Phase 1 · Step 2** — public site (black/red/chrome) + live inventory + detail modal + contact form ← *you are here*
+- [ ] Steps 3–14 — admin dashboard, image upload, VIN decode, financing, email notifications, documents (window sticker / BOS / waiver)
 - [ ] Phase 2 — CRM (production / ledger / sold, inspection PDF, backups)
 
 ## Config

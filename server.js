@@ -12,8 +12,6 @@ const fs           = require('fs');
 const crypto       = require('crypto');
 const bcrypt       = require('bcryptjs');
 const jwt          = require('jsonwebtoken');
-const multer       = require('multer');
-const sharp        = require('sharp');
 const Database     = require('better-sqlite3');
 const { DEALERSHIP } = require('./config');
 
@@ -298,20 +296,8 @@ function attachImages(vehicle) {
 // Public list — only cars at the dealership and not sold
 app.get('/api/vehicles', (req, res) => {
   const { status, search } = req.query;
-  // Check for admin token to allow full view
-  const h = req.headers.authorization || '';
-  const token = h.startsWith('Bearer ') ? h.slice(7) : null;
-  let isAdmin = false;
-  if (token) { try { const u = jwt.verify(token, JWT_SECRET); isAdmin = !!u; } catch {} }
-
-  let sql, params;
-  if (isAdmin) {
-    sql = `SELECT * FROM vehicles WHERE 1=1`;
-    params = [];
-  } else {
-    sql = `SELECT * FROM vehicles WHERE at_dealership = 1 AND status != 'sold'`;
-    params = [];
-  }
+  let sql = `SELECT * FROM vehicles WHERE at_dealership = 1 AND status != 'sold'`;
+  const params = [];
   if (status && status !== 'all') { sql += ` AND status = ?`; params.push(status); }
   if (search) {
     sql += ` AND (CAST(year AS TEXT) LIKE ? OR make LIKE ? OR model LIKE ? OR trim LIKE ?)`;
@@ -364,455 +350,27 @@ app.delete('/api/vehicles/:id', requireAuth, (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-//  Image upload (multer + sharp)
-// ---------------------------------------------------------------------------
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024, files: 20 },
-  fileFilter: (_req, file, cb) => {
-    if (!file.mimetype.startsWith('image/')) return cb(new Error('Images only'));
-    cb(null, true);
-  },
-});
-
-app.post('/api/vehicles/:id/images', requireAuth, upload.array('images', 20), async (req, res) => {
-  const v = db.prepare(`SELECT * FROM vehicles WHERE id=?`).get(req.params.id);
-  if (!v) return res.status(404).json({ error: 'Not found' });
-  if (!req.files || !req.files.length) return res.status(400).json({ error: 'No images provided' });
-  const results = [];
-  const t = now();
-  for (const file of req.files) {
-    const ext = path.extname(file.originalname) || '.jpg';
-    const fname = `${uid()}${ext}`;
-    const dest = path.join(UPLOADS_DIR, fname);
-    await sharp(file.buffer).resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 85 }).toFile(dest);
-    const sort = db.prepare(`SELECT COALESCE(MAX(sort_order),-1)+1 AS n FROM vehicle_images WHERE vehicle_id=?`).get(req.params.id);
-    db.prepare(`INSERT INTO vehicle_images (id, vehicle_id, filename, sort_order, created_at) VALUES (?,?,?,?,?)`)
-      .run(uid(), req.params.id, fname, sort.n, t);
-    results.push({ filename: fname, url: `/uploads/${fname}` });
-  }
-  db.prepare(`UPDATE vehicles SET updated_at=? WHERE id=?`).run(t, req.params.id);
-  res.status(201).json(results);
-});
-
-app.delete('/api/vehicles/:id/images/:filename', requireAuth, (req, res) => {
-  const img = db.prepare(`SELECT * FROM vehicle_images WHERE vehicle_id=? AND filename=?`).get(req.params.id, req.params.filename);
-  if (!img) return res.status(404).json({ error: 'Not found' });
-  try { fs.unlinkSync(path.join(UPLOADS_DIR, img.filename)); } catch {}
-  db.prepare(`DELETE FROM vehicle_images WHERE id=?`).run(img.id);
-  res.json({ ok: true });
-});
-
-app.put('/api/vehicles/:id/images/reorder', requireAuth, (req, res) => {
-  const { order } = req.body || {};
-  if (!Array.isArray(order)) return res.status(400).json({ error: 'order array required' });
-  const stmt = db.prepare(`UPDATE vehicle_images SET sort_order=? WHERE vehicle_id=? AND filename=?`);
-  order.forEach((fname, i) => stmt.run(i, req.params.id, fname));
-  res.json({ ok: true });
-});
-
-// ---------------------------------------------------------------------------
-//  Email helper (Resend HTTP API)
-// ---------------------------------------------------------------------------
-async function sendEmail({ to, subject, html }) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('[email] RESEND_API_KEY not set — skipping email');
-    return false;
-  }
-  try {
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: process.env.FROM_EMAIL || 'onboarding@resend.dev',
-        to: to || process.env.NOTIFY_EMAIL || DEALERSHIP.email,
-        subject,
-        html,
-      }),
-    });
-    if (!r.ok) throw new Error(await r.text());
-    return true;
-  } catch (e) {
-    console.warn('[email] failed:', e.message);
-    return false;
-  }
-}
-
-// ---------------------------------------------------------------------------
-//  Financing applications
-// ---------------------------------------------------------------------------
-app.post('/api/financing', (req, res) => {
-  const b = req.body || {};
-  if (!b.first_name || !b.last_name || !b.email || !b.phone || !b.consent_credit_check)
-    return res.status(400).json({ error: 'Name, email, phone, and consent are required' });
-  const id = uid(), t = now();
-  const fields = [
-    'first_name','last_name','email','phone','date_of_birth','sin','marital_status',
-    'street_address','city','province','postal_code','housing_status','monthly_housing_payment',
-    'years_at_address','months_at_address','prev_street_address','prev_city','prev_province','prev_postal_code',
-    'employment_status','employer_name','job_title','employer_phone','years_employed','months_employed',
-    'gross_monthly_income','other_income','other_income_source',
-    'vehicle_of_interest','vehicle_id','down_payment','has_trade_in','trade_in_details',
-    'has_co_applicant','co_applicant_name','co_applicant_relationship','co_applicant_phone',
-    'consent_credit_check','notes',
-  ];
-  const vals = fields.map(f => b[f] !== undefined ? b[f] : null);
-  db.prepare(`INSERT INTO financing_applications
-    (id, ${fields.join(',')}, created_at, updated_at)
-    VALUES (?, ${fields.map(()=>'?').join(',')}, ?, ?)`)
-    .run(id, ...vals, t, t);
-
-  const notifyTo = process.env.NOTIFY_EMAIL || DEALERSHIP.email;
-  sendEmail({
-    to: notifyTo,
-    subject: `New Financing App: ${b.first_name} ${b.last_name}`,
-    html: `<h2>New Financing Application</h2>
-      <p><strong>Name:</strong> ${b.first_name} ${b.last_name}</p>
-      <p><strong>Email:</strong> ${b.email} | <strong>Phone:</strong> ${b.phone}</p>
-      <p><strong>Vehicle:</strong> ${b.vehicle_of_interest || 'N/A'}</p>
-      <p><strong>Income:</strong> $${(b.gross_monthly_income || 0).toLocaleString()}</p>
-      <p><a href="${process.env.PUBLIC_URL || ''}/admin">View in Admin</a></p>`,
-  }).catch(() => {});
-
-  res.status(201).json({ id, ok: true });
-});
-
-app.get('/api/financing', requireAuth, (req, res) => {
-  const rows = db.prepare(`SELECT * FROM financing_applications ORDER BY created_at DESC`).all();
-  res.json(rows);
-});
-
-app.get('/api/financing/:id', requireAuth, (req, res) => {
-  const row = db.prepare(`SELECT * FROM financing_applications WHERE id=?`).get(req.params.id);
-  if (!row) return res.status(404).json({ error: 'Not found' });
-  res.json(row);
-});
-
-app.put('/api/financing/:id', requireAuth, (req, res) => {
-  const b = req.body || {};
-  const app = db.prepare(`SELECT * FROM financing_applications WHERE id=?`).get(req.params.id);
-  if (!app) return res.status(404).json({ error: 'Not found' });
-  if (b.status) db.prepare(`UPDATE financing_applications SET status=?, updated_at=? WHERE id=?`).run(b.status, now(), req.params.id);
-  if (b.admin_notes !== undefined) db.prepare(`UPDATE financing_applications SET admin_notes=?, updated_at=? WHERE id=?`).run(b.admin_notes, now(), req.params.id);
-  res.json(db.prepare(`SELECT * FROM financing_applications WHERE id=?`).get(req.params.id));
-});
-
-// ---------------------------------------------------------------------------
-//  Contact messages
+//  Contact messages (public submit; admin views come with the admin step)
 // ---------------------------------------------------------------------------
 app.post('/api/contact', (req, res) => {
   const b = req.body || {};
-  if (!b.name || !b.email || !b.phone) return res.status(400).json({ error: 'Name, email, and phone are required' });
-  const id = uid(), t = now();
-  db.prepare(`INSERT INTO contact_messages (id, type, name, email, phone, vehicle_details, message, created_at, updated_at)
+  const type = ['general', 'trade-in', 'sourcing'].includes(b.type) ? b.type : 'general';
+  if (!b.name || !b.email || !b.phone)
+    return res.status(400).json({ error: 'name, email, and phone are required' });
+  if ((type === 'trade-in' || type === 'sourcing') && !b.vehicle_details)
+    return res.status(400).json({ error: 'vehicle_details required for this inquiry type' });
+  const t = now();
+  db.prepare(`INSERT INTO contact_messages
+    (id, type, name, email, phone, vehicle_details, message, created_at, updated_at)
     VALUES (?,?,?,?,?,?,?,?,?)`)
-    .run(id, b.type || 'general', b.name, b.email, b.phone, b.vehicle_details || null, b.message || null, t, t);
-
-  const notifyTo = process.env.NOTIFY_EMAIL || DEALERSHIP.email;
-  sendEmail({
-    to: notifyTo,
-    subject: `New ${b.type || 'Contact'} Inquiry: ${b.name}`,
-    html: `<h2>New Contact Inquiry</h2>
-      <p><strong>Type:</strong> ${b.type || 'General'}</p>
-      <p><strong>Name:</strong> ${b.name}</p>
-      <p><strong>Email:</strong> ${b.email} | <strong>Phone:</strong> ${b.phone}</p>
-      ${b.vehicle_details ? `<p><strong>Vehicle:</strong> ${b.vehicle_details}</p>` : ''}
-      ${b.message ? `<p><strong>Message:</strong> ${b.message}</p>` : ''}
-      <p><a href="${process.env.PUBLIC_URL || ''}/admin">View in Admin</a></p>`,
-  }).catch(() => {});
-
-  res.status(201).json({ id, ok: true });
-});
-
-app.get('/api/contact', requireAuth, (req, res) => {
-  const rows = db.prepare(`SELECT * FROM contact_messages ORDER BY created_at DESC`).all();
-  res.json(rows);
-});
-
-app.put('/api/contact/:id', requireAuth, (req, res) => {
-  const b = req.body || {};
-  const row = db.prepare(`SELECT * FROM contact_messages WHERE id=?`).get(req.params.id);
-  if (!row) return res.status(404).json({ error: 'Not found' });
-  if (b.status) db.prepare(`UPDATE contact_messages SET status=?, updated_at=? WHERE id=?`).run(b.status, now(), req.params.id);
-  if (b.admin_notes !== undefined) db.prepare(`UPDATE contact_messages SET admin_notes=?, updated_at=? WHERE id=?`).run(b.admin_notes, now(), req.params.id);
-  res.json(db.prepare(`SELECT * FROM contact_messages WHERE id=?`).get(req.params.id));
-});
-
-app.delete('/api/contact/:id', requireAuth, (req, res) => {
-  const info = db.prepare(`DELETE FROM contact_messages WHERE id=?`).run(req.params.id);
-  if (!info.changes) return res.status(404).json({ error: 'Not found' });
-  res.json({ ok: true });
+    .run(uid(), type, String(b.name).slice(0, 200), String(b.email).slice(0, 200),
+         String(b.phone).slice(0, 50), b.vehicle_details || null, b.message || null, t, t);
+  // Email notification is wired in a later step (Resend); saved to DB for now.
+  res.status(201).json({ ok: true });
 });
 
 // ---------------------------------------------------------------------------
-//  CRM Data Layer — GitHub-as-database
-//  Stores crmVehicles + soldRecords in a private GitHub repo as data.json.
-//  Every write is a Git commit = automatic version history + off-platform backup.
-// ---------------------------------------------------------------------------
-
-const GITHUB_TOKEN   = process.env.GITHUB_TOKEN;
-const GITHUB_OWNER   = process.env.GITHUB_OWNER;
-const GITHUB_REPO    = process.env.GITHUB_REPO;
-const GITHUB_BRANCH  = process.env.GITHUB_BRANCH || 'main';
-const DATA_PATH      = process.env.DATA_PATH || 'data.json';
-const GITHUB_API     = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${DATA_PATH}`;
-
-let _dataCache = null;  // in-memory cache, refreshed on GET
-
-async function readGitHubData() {
-  if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
-    // Fallback: use in-memory cache or empty state
-    return _dataCache || { crmVehicles: [], soldRecords: [], _version: 0 };
-  }
-  try {
-    const r = await fetch(`${GITHUB_API}?ref=${GITHUB_BRANCH}`, {
-      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'dealership-crm' },
-    });
-    if (r.status === 404) {
-      // File doesn't exist yet — return empty
-      const empty = { crmVehicles: [], soldRecords: [], _version: 0 };
-      _dataCache = empty;
-      return empty;
-    }
-    if (!r.ok) throw new Error(`GitHub read failed: ${r.status} ${await r.text()}`);
-    const body = await r.json();
-    const content = Buffer.from(body.content, 'base64').toString('utf-8');
-    const data = JSON.parse(content);
-    // Attach sha for subsequent writes
-    data._sha = body.sha;
-    _dataCache = data;
-    return data;
-  } catch (e) {
-    console.warn('[github-data] read failed:', e.message, '— using cache');
-    return _dataCache || { crmVehicles: [], soldRecords: [], _version: 0 };
-  }
-}
-
-async function writeGitHubData(data) {
-  if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
-    _dataCache = data;
-    console.warn('[github-data] GITHUB_TOKEN not configured — data saved to memory only');
-    return data;
-  }
-  const _version = (data._version || 0) + 1;
-  data._version = _version;
-  data._updatedAt = new Date().toISOString();
-
-  const content = Buffer.from(JSON.stringify(data, null, 2)).toString('base64');
-  const body = {
-    message: `Update CRM data (v${_version})`,
-    content,
-    branch: GITHUB_BRANCH,
-  };
-  if (data._sha) body.sha = data._sha;
-
-  try {
-    const r = await fetch(GITHUB_API, {
-      method: 'PUT',
-      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'dealership-crm', 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!r.ok) throw new Error(`GitHub write failed: ${r.status} ${await r.text()}`);
-    const resp = await r.json();
-    data._sha = resp.content.sha;  // update sha for next write
-    _dataCache = data;
-    return data;
-  } catch (e) {
-    _dataCache = data;
-    console.warn('[github-data] write failed:', e.message, '— saved to cache only');
-    return data;
-  }
-}
-
-// ---- /api/data — full CRM state (GitHub-backed) ----
-// GET: returns { crmVehicles, soldRecords, _version, _updatedAt }
-app.get('/api/data', requireAuth, async (req, res) => {
-  const data = await readGitHubData();
-  const isOwner = req.user.role === 'owner';
-  const crmVehicles = data.crmVehicles || [];
-  const soldRecords = data.soldRecords || [];
-
-  // Merge with SQLite vehicle data for display info (year, make, model, VIN, images, etc.)
-  const vehicleMap = {};
-  db.prepare(`SELECT * FROM vehicles`).all().forEach(v => {
-    const imgs = db.prepare(`SELECT filename FROM vehicle_images WHERE vehicle_id=? ORDER BY sort_order, created_at`).all(v.id).map(im => `/uploads/${im.filename}`);
-    vehicleMap[v.id] = { ...v, images: imgs };
-  });
-
-  const enrichedVehicles = crmVehicles.map(cv => {
-    const v = vehicleMap[cv.vehicle_id] || {};
-    const costs = cv.costs || {};
-    const totalCost = (costs.purchase_price||0)+(costs.icbc||0)+(costs.detailing||0)+(costs.transport||0)+(costs.boost||0)+(costs.tire||0)+(costs.repair||0)+(costs.windshield||0)+(costs.afc_extra||0)+(costs.misc_cost||0)+(costs.sales_cost||0);
-    const merged = { ...v, ...cv, total_cost: totalCost, images: v.images || [] };
-    // Staff: strip costs
-    if (!isOwner) {
-      delete merged.purchase_price; delete merged.icbc; delete merged.detailing; delete merged.transport;
-      delete merged.boost; delete merged.tire; delete merged.repair; delete merged.windshield;
-      delete merged.afc_extra; delete merged.misc_cost; delete merged.sales_cost;
-      delete merged.gst_paid; delete merged.source_type; delete merged.source_name;
-      delete merged.acquisition_price; delete merged.buyer_name; delete merged.buyer_phone;
-      delete merged.buyer_email; delete merged.total_cost;
-    }
-    return merged;
-  });
-
-  // Staff: filter to dealership-only
-  const filteredVehicles = isOwner ? enrichedVehicles
-    : enrichedVehicles.filter(v => v.location === 'Dealership' || v.location == null || !v.location);
-
-  res.json({
-    crmVehicles: filteredVehicles,
-    soldRecords: isOwner ? soldRecords : [],
-    _version: data._version,
-  });
-});
-
-// PUT: save full CRM state. Requires owner.
-app.put('/api/data', requireAuth, requireOwner, async (req, res) => {
-  const b = req.body || {};
-  const data = await readGitHubData();
-  if (b.crmVehicles !== undefined) data.crmVehicles = b.crmVehicles;
-  if (b.soldRecords !== undefined) data.soldRecords = b.soldRecords;
-
-  // Sync location changes to SQLite (for website visibility)
-  if (b.crmVehicles) {
-    const t = now();
-    for (const cv of b.crmVehicles) {
-      if (cv.vehicle_id && cv.location !== undefined) {
-        const atDeal = cv.location === 'Dealership' ? 1 : 0;
-        db.prepare(`UPDATE vehicles SET at_dealership=?, updated_at=? WHERE id=?`).run(atDeal, t, cv.vehicle_id);
-      }
-    }
-  }
-
-  // If a vehicle was marked sold (removed from crmVehicles), also remove from SQLite
-  // This is handled by crmVehicles array no longer containing that vehicle_id
-
-  const saved = await writeGitHubData(data);
-  res.json({ ok: true, _version: saved._version });
-});
-
-// ---- Sold operations (thin wrappers over /api/data) ----
-app.post('/api/crm/sold', requireAuth, requireOwner, async (req, res) => {
-  const b = req.body || {};
-  if (!b.vehicle_id) return res.status(400).json({ error: 'vehicle_id required' });
-  const data = await readGitHubData();
-  const vehicles = data.crmVehicles || [];
-
-  // Find and remove from CRM vehicles
-  const idx = vehicles.findIndex(cv => cv.vehicle_id === b.vehicle_id);
-  const crmVeh = idx >= 0 ? vehicles[idx] : { costs: {} };
-
-  // Build sold record
-  const soldRecord = {
-    id: uid(),
-    vehicle_id: b.vehicle_id,
-    stock_number: b.stock_number || crmVeh.stock_number || '',
-    year: b.year, make: b.make, model: b.model,
-    purchase_price: b.purchase_price || (crmVeh.costs && crmVeh.costs.purchase_price) || 0,
-    gst_paid: b.gst_paid || (crmVeh.costs && crmVeh.costs.gst_paid) || 0,
-    seller_name: b.seller_name || '',
-    sale_date: b.sale_date || '',
-    selling_price: b.selling_price || 0,
-    reserve_non_gst: b.reserve_non_gst || 0,
-    gst_collected: b.gst_collected || 0,
-    pst_collected: b.pst_collected || 0,
-    buyer_name: b.buyer_name || '',
-    buyer_phone: b.buyer_phone || '',
-    buyer_email: b.buyer_email || '',
-    created_at: now(),
-  };
-
-  if (idx >= 0) vehicles.splice(idx, 1);
-  data.crmVehicles = vehicles;
-  data.soldRecords = [soldRecord, ...(data.soldRecords || [])];
-
-  // Remove from SQLite (website)
-  db.prepare(`DELETE FROM vehicles WHERE id=?`).run(b.vehicle_id);
-
-  await writeGitHubData(data);
-  res.status(201).json({ id: soldRecord.id, ok: true });
-});
-
-// Return to inventory — undo a sold record
-app.post('/api/crm/sold/:id/return', requireAuth, requireOwner, async (req, res) => {
-  const data = await readGitHubData();
-  const soldRecords = data.soldRecords || [];
-  const idx = soldRecords.findIndex(s => s.id === req.params.id);
-  if (idx < 0) return res.status(404).json({ error: 'Not found' });
-
-  const record = soldRecords[idx];
-  soldRecords.splice(idx, 1);
-
-  // Re-create vehicle in SQLite
-  const vid = uid(), t = now();
-  db.prepare(`INSERT INTO vehicles (id, stock_number, year, make, model, price, status, at_dealership, created_at, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?)`).run(
-    vid, record.stock_number, record.year, record.make, record.model,
-    record.purchase_price || 0, 'available', 1, t, t
-  );
-
-  // Add to CRM vehicles
-  const crmVehicle = {
-    vehicle_id: vid,
-    stock_number: record.stock_number,
-    costs: { purchase_price: record.purchase_price || 0, gst_paid: record.gst_paid || 0 },
-    location: 'Dealership',
-    registration_done: 0, inspection_done: 0, inspection_data: null,
-  };
-  data.soldRecords = soldRecords;
-  data.crmVehicles = [...(data.crmVehicles || []), crmVehicle];
-
-  await writeGitHubData(data);
-  res.json({ ok: true, vehicle_id: vid });
-});
-
-// ---- Backup (now GitHub IS the backup, but keep download for offline copies) ----
-app.get('/api/crm/backup', requireAuth, requireOwner, async (req, res) => {
-  const data = await readGitHubData();
-  const { _sha, ...backup } = data;
-  backup.exportedAt = new Date().toISOString();
-  backup.source = 'github-data-repo';
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Content-Disposition', `attachment; filename="dealership-backup-${new Date().toISOString().slice(0,10)}.json"`);
-  res.json(backup);
-});
-
-app.post('/api/crm/backup/restore', requireAuth, requireOwner, async (req, res) => {
-  const { data: incoming, mode } = req.body || {};
-  if (!incoming) return res.status(400).json({ error: 'Backup data required' });
-
-  if (mode === 'replace') {
-    await writeGitHubData({ crmVehicles: incoming.crmVehicles || [], soldRecords: incoming.soldRecords || [], _version: 0 });
-    return res.json({ ok: true, mode: 'replace' });
-  }
-
-  // Merge — add only records with new IDs
-  const current = await readGitHubData();
-  const existingVehicleIds = new Set((current.crmVehicles || []).map(v => v.vehicle_id));
-  const existingSoldIds = new Set((current.soldRecords || []).map(s => s.id));
-
-  let added = 0;
-  for (const cv of (incoming.crmVehicles || [])) {
-    if (!existingVehicleIds.has(cv.vehicle_id)) {
-      current.crmVehicles.push(cv);
-      added++;
-    }
-  }
-  for (const sr of (incoming.soldRecords || [])) {
-    if (!existingSoldIds.has(sr.id)) {
-      current.soldRecords.push(sr);
-      added++;
-    }
-  }
-
-  await writeGitHubData(current);
-  res.json({ ok: true, added, mode: 'merge' });
-});
-
-// --------------------------------------------------------------------------- (public, non-sensitive branding for the frontend)
+//  Health + config (public, non-sensitive branding for the frontend)
 // ---------------------------------------------------------------------------
 app.get('/api/health', (_req, res) => res.json({ ok: true, time: now() }));
 app.get('/api/config', (_req, res) => {
@@ -827,14 +385,9 @@ app.get('/api/config', (_req, res) => {
   });
 });
 
-// SPA-ish fallback for public site + admin + CRM
+// SPA-ish fallback for the public site
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) return next();
-  if (req.path === '/admin' || req.path.startsWith('/admin/')) return res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-  if (req.path === '/crm' || req.path.startsWith('/crm/')) return res.sendFile(path.join(__dirname, 'public', 'crm.html'));
-  // Check if requested file exists in public/
-  const filePath = path.join(__dirname, 'public', req.path);
-  try { if (fs.statSync(filePath).isFile()) return res.sendFile(filePath); } catch {}
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
