@@ -4,11 +4,13 @@ Public website + internal CRM for **GP Auto Sales Ltd.** (brand: **Absolute Moto
 Everything runs on **one Railway service**: a Node/Express + SQLite backend that serves
 the public site, the staff/owner admin, and the CRM — one login, one database, one deploy.
 
-## Status — build in progress
-- [x] Phase 1 · Step 1 — server, SQLite schema, two-role auth, vehicle CRUD
-- [x] **Phase 1 · Step 2** — public site (black/red/chrome) + live inventory + detail modal + contact form ← *you are here*
-- [ ] Steps 3–14 — admin dashboard, image upload, VIN decode, financing, email notifications, documents (window sticker / BOS / waiver)
-- [ ] Phase 2 — CRM (production / ledger / sold, inspection PDF, backups)
+## Status — build complete
+
+- [x] Public site (`/`) — black/red/chrome design, live inventory, detail modal, 3-mode contact form, WhatsApp button
+- [x] Financing application (`/financing`) — 6 sections, vehicle-of-interest picker from live inventory, credit-check consent
+- [x] Admin dashboard (`/admin`) — login, inventory CRUD, image upload + reorder, VIN decode (NHTSA vPIC), financing review, message inbox, documents (window sticker, Bill of Sale, delivery waiver)
+- [x] CRM (`/crm`) — production board with location tracking, ledger (owner-only), sold tracker with profit calc (owner-only), inspection checklist + printable MFA report, backup / restore
+- [x] Server — Express + SQLite (WAL, auto-recovery on volume adoption), JWT auth with owner/staff roles, Resend email hook (optional)
 
 ## Config
 Business identity lives in `config.js`. Values marked `⚠ FILL IN` are intentionally blank
@@ -43,5 +45,10 @@ npm start                 # http://localhost:3000
 - `POST /api/vehicles` (with `Authorization: Bearer <token>`) → creates a car
 - `GET /api/vehicles` → lists it (public, no auth needed)
 
-## What to commit for this step
-`server.js`, `config.js`, `package.json`, `.env.example`, `.gitignore`, `public/index.html`, `README.md`
+## Fill-in-before-launch checklist
+
+In `config.js`, fill the fields marked `⚠ FILL IN`: email, Instagram, hours, tagline, inspection facility name/number, technician name. In `public/admin.js`, replace the `[[PASTE EXACT WAIVER WORDING]]` placeholder inside `waiverHTML()` with the dealership's approved waiver text.
+
+**Have the Bill of Sale + Waiver reviewed by a lawyer or the VSA before using with customers.** The BOS reproduces the master template text verbatim, but formatting or PDF-generation quirks can still shift how a court reads a clause.
+
+

@@ -350,6 +350,113 @@ app.delete('/api/vehicles/:id', requireAuth, (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+//  Email (Resend) — optional; fires only if RESEND_API_KEY is set
+// ---------------------------------------------------------------------------
+async function sendEmail(subject, html) {
+  const key = process.env.RESEND_API_KEY, to = process.env.NOTIFY_EMAIL;
+  if (!key || !to) return;
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: process.env.FROM_EMAIL || 'onboarding@resend.dev', to, subject, html }),
+    });
+  } catch (e) { console.warn('[email]', e.message); }
+}
+
+// ---------------------------------------------------------------------------
+//  Vehicle images — upload (multer+sharp), delete, reorder
+// ---------------------------------------------------------------------------
+const multer = require('multer');
+const sharp  = require('sharp');
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
+
+app.post('/api/vehicles/:id/images', requireAuth, upload.array('images', 20), async (req, res) => {
+  const v = db.prepare(`SELECT id FROM vehicles WHERE id=?`).get(req.params.id);
+  if (!v) return res.status(404).json({ error: 'Vehicle not found' });
+  if (!req.files || !req.files.length) return res.status(400).json({ error: 'No images uploaded' });
+  const maxSort = db.prepare(`SELECT COALESCE(MAX(sort_order),-1) m FROM vehicle_images WHERE vehicle_id=?`)
+    .get(v.id).m;
+  const saved = [];
+  for (let i = 0; i < req.files.length; i++) {
+    const fname = `${v.id}-${Date.now()}-${i}.jpg`;
+    try {
+      await sharp(req.files[i].buffer).rotate()
+        .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 85 }).toFile(path.join(UPLOADS_DIR, fname));
+      db.prepare(`INSERT INTO vehicle_images (id, vehicle_id, filename, sort_order, created_at)
+        VALUES (?,?,?,?,?)`).run(uid(), v.id, fname, maxSort + 1 + i, now());
+      saved.push(`/uploads/${fname}`);
+    } catch (e) { console.warn('[img]', e.message); }
+  }
+  res.status(201).json({ images: saved });
+});
+
+app.delete('/api/vehicles/:id/images/:filename', requireAuth, (req, res) => {
+  const row = db.prepare(`SELECT * FROM vehicle_images WHERE vehicle_id=? AND filename=?`)
+    .get(req.params.id, req.params.filename);
+  if (!row) return res.status(404).json({ error: 'Not found' });
+  db.prepare(`DELETE FROM vehicle_images WHERE id=?`).run(row.id);
+  try { fs.unlinkSync(path.join(UPLOADS_DIR, row.filename)); } catch {}
+  res.json({ ok: true });
+});
+
+app.put('/api/vehicles/:id/images/reorder', requireAuth, (req, res) => {
+  const order = req.body && req.body.order;
+  if (!Array.isArray(order)) return res.status(400).json({ error: 'order array required' });
+  const stmt = db.prepare(`UPDATE vehicle_images SET sort_order=? WHERE vehicle_id=? AND filename=?`);
+  order.forEach((fname, i) => stmt.run(i, req.params.id, fname.replace('/uploads/', '')));
+  res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+//  Financing applications
+// ---------------------------------------------------------------------------
+const FIN_FIELDS = ['first_name','last_name','email','phone','date_of_birth','sin','marital_status',
+ 'street_address','city','province','postal_code','housing_status','monthly_housing_payment',
+ 'years_at_address','months_at_address','prev_street_address','prev_city','prev_province','prev_postal_code',
+ 'employment_status','employer_name','job_title','employer_phone','years_employed','months_employed',
+ 'gross_monthly_income','other_income','other_income_source','vehicle_of_interest','vehicle_id','down_payment',
+ 'has_trade_in','trade_in_details','has_co_applicant','co_applicant_name','co_applicant_relationship',
+ 'co_applicant_phone','consent_credit_check','notes'];
+
+app.post('/api/financing', (req, res) => {
+  const b = req.body || {};
+  if (!b.first_name || !b.last_name || !b.email || !b.phone)
+    return res.status(400).json({ error: 'Name, email, and phone are required' });
+  if (!b.consent_credit_check)
+    return res.status(400).json({ error: 'Credit check consent is required' });
+  const t = now(), id = uid();
+  db.prepare(`INSERT INTO financing_applications (id, ${FIN_FIELDS.join(',')}, status, created_at, updated_at)
+    VALUES (?, ${FIN_FIELDS.map(()=>'?').join(',')}, 'new', ?, ?)`)
+    .run(id, ...FIN_FIELDS.map(f => b[f] !== undefined ? b[f] : null), t, t);
+  sendEmail(`New financing application — ${b.first_name} ${b.last_name}`,
+    `<p>${b.first_name} ${b.last_name} · ${b.phone} · ${b.email}</p>
+     <p>Vehicle: ${b.vehicle_of_interest || '—'}</p><p>Log in to the admin dashboard to review.</p>`);
+  res.status(201).json({ ok: true });
+});
+
+app.get('/api/financing', requireAuth, (req, res) => {
+  const { status } = req.query;
+  let sql = `SELECT * FROM financing_applications`; const p = [];
+  if (status && status !== 'all') { sql += ` WHERE status=?`; p.push(status); }
+  sql += ` ORDER BY created_at DESC`;
+  res.json(db.prepare(sql).all(...p));
+});
+app.get('/api/financing/:id', requireAuth, (req, res) => {
+  const r = db.prepare(`SELECT * FROM financing_applications WHERE id=?`).get(req.params.id);
+  r ? res.json(r) : res.status(404).json({ error: 'Not found' });
+});
+app.put('/api/financing/:id', requireAuth, (req, res) => {
+  const b = req.body || {};
+  const allowed = ['status','admin_notes'].filter(f => b[f] !== undefined);
+  if (allowed.length)
+    db.prepare(`UPDATE financing_applications SET ${allowed.map(f=>`${f}=?`).join(',')}, updated_at=? WHERE id=?`)
+      .run(...allowed.map(f=>b[f]), now(), req.params.id);
+  res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
 //  Contact messages (public submit; admin views come with the admin step)
 // ---------------------------------------------------------------------------
 app.post('/api/contact', (req, res) => {
@@ -384,6 +491,168 @@ app.get('/api/config', (_req, res) => {
     accentColor: rest.accentColor, gstRate, pstRate,
   });
 });
+
+app.get('/api/contact', requireAuth, (req, res) => {
+  res.json(db.prepare(`SELECT * FROM contact_messages ORDER BY created_at DESC`).all());
+});
+app.put('/api/contact/:id', requireAuth, (req, res) => {
+  const b = req.body || {};
+  const allowed = ['status','admin_notes'].filter(f => b[f] !== undefined);
+  if (allowed.length)
+    db.prepare(`UPDATE contact_messages SET ${allowed.map(f=>`${f}=?`).join(',')}, updated_at=? WHERE id=?`)
+      .run(...allowed.map(f=>b[f]), now(), req.params.id);
+  res.json({ ok: true });
+});
+app.delete('/api/contact/:id', requireAuth, (req, res) => {
+  db.prepare(`DELETE FROM contact_messages WHERE id=?`).run(req.params.id);
+  res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+//  CRM — production data (costs owner-only; staff sees dealership cars, no $)
+// ---------------------------------------------------------------------------
+const COST_FIELDS = ['purchase_price','icbc','detailing','transport','boost','tire','repair',
+  'windshield','afc_extra','misc_cost','sales_cost','gst_paid','source_type','source_name',
+  'acquisition_price','buyer_name','buyer_phone','buyer_email'];
+const STAFF_COST_FIELDS = ['registration_done','inspection_done','inspection_data'];
+
+function getCosts(vehicleId) {
+  let c = db.prepare(`SELECT * FROM vehicle_costs WHERE vehicle_id=?`).get(vehicleId);
+  if (!c) {
+    db.prepare(`INSERT INTO vehicle_costs (vehicle_id, updated_at) VALUES (?,?)`).run(vehicleId, now());
+    c = db.prepare(`SELECT * FROM vehicle_costs WHERE vehicle_id=?`).get(vehicleId);
+  }
+  return c;
+}
+
+app.get('/api/crm/vehicles', requireAuth, (req, res) => {
+  const isOwner = req.user.role === 'owner';
+  let vehicles = db.prepare(`SELECT * FROM vehicles WHERE status != 'sold' ORDER BY created_at DESC`).all();
+  const rows = vehicles.map(v => {
+    const c = getCosts(v.id);
+    if (!isOwner && c.location !== 'Dealership') return null;          // staff: dealership only
+    const base = { ...attachImages(v),
+      location: c.location, registration_done: c.registration_done,
+      inspection_done: c.inspection_done, inspection_data: c.inspection_data };
+    if (isOwner) COST_FIELDS.forEach(f => base[f] = c[f]);             // costs: owner only
+    return base;
+  }).filter(Boolean);
+  res.json(rows);
+});
+
+app.put('/api/crm/vehicles/:id/location', requireAuth, requireOwner, (req, res) => {
+  const loc = req.body && req.body.location;
+  const LOCS = ['Auction','Mechanic Shop','Dealership','Detail Shop','Body Shop','With Customer',"Owner's Home"];
+  if (!LOCS.includes(loc)) return res.status(400).json({ error: 'Invalid location' });
+  getCosts(req.params.id);
+  db.prepare(`UPDATE vehicle_costs SET location=?, updated_at=? WHERE vehicle_id=?`).run(loc, now(), req.params.id);
+  // at_dealership sync: Dealership => visible on website; anything else hidden
+  db.prepare(`UPDATE vehicles SET at_dealership=?, updated_at=? WHERE id=?`)
+    .run(loc === 'Dealership' ? 1 : 0, now(), req.params.id);
+  res.json({ ok: true });
+});
+
+app.put('/api/crm/vehicles/:id/costs', requireAuth, (req, res) => {
+  const b = req.body || {};
+  const isOwner = req.user.role === 'owner';
+  const fields = (isOwner ? [...COST_FIELDS, ...STAFF_COST_FIELDS] : STAFF_COST_FIELDS)
+    .filter(f => b[f] !== undefined);
+  const attempted = Object.keys(b);
+  if (!isOwner && attempted.some(f => COST_FIELDS.includes(f)))
+    return res.status(403).json({ error: 'Owner access required for cost fields' });
+  if (!fields.length) return res.status(400).json({ error: 'No valid fields' });
+  getCosts(req.params.id);
+  db.prepare(`UPDATE vehicle_costs SET ${fields.map(f=>`${f}=?`).join(',')}, updated_at=? WHERE vehicle_id=?`)
+    .run(...fields.map(f=>b[f]), now(), req.params.id);
+  res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+//  Sold ledger (owner only)
+// ---------------------------------------------------------------------------
+app.get('/api/crm/sold', requireAuth, requireOwner, (req, res) => {
+  res.json(db.prepare(`SELECT * FROM sold_records ORDER BY created_at DESC`).all());
+});
+
+app.post('/api/crm/sold', requireAuth, requireOwner, (req, res) => {
+  const b = req.body || {};
+  if (!b.vehicle_id) return res.status(400).json({ error: 'vehicle_id required' });
+  const v = db.prepare(`SELECT * FROM vehicles WHERE id=?`).get(b.vehicle_id);
+  if (!v) return res.status(404).json({ error: 'Vehicle not found' });
+  const c = getCosts(v.id);
+  const id = uid();
+  db.prepare(`INSERT INTO sold_records (id, vehicle_id, stock_number, year, make, model,
+    purchase_price, gst_paid, seller_name, sale_date, selling_price, reserve_non_gst,
+    gst_collected, pst_collected, buyer_name, buyer_phone, buyer_email, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(id, v.id, v.stock_number, v.year, v.make, v.model,
+      b.purchase_price ?? c.purchase_price, b.gst_paid ?? c.gst_paid,
+      b.seller_name ?? c.source_name, b.sale_date || new Date().toISOString().slice(0,10),
+      b.selling_price ?? null, b.reserve_non_gst ?? null,
+      b.gst_collected ?? null, b.pst_collected ?? null,
+      b.buyer_name ?? c.buyer_name, b.buyer_phone ?? c.buyer_phone, b.buyer_email ?? c.buyer_email, now());
+  db.prepare(`UPDATE vehicles SET status='sold', at_dealership=0, updated_at=? WHERE id=?`).run(now(), v.id);
+  res.status(201).json({ id });
+});
+
+// Return to inventory (fallen-through sale)
+app.delete('/api/crm/sold/:id', requireAuth, requireOwner, (req, res) => {
+  const r = db.prepare(`SELECT * FROM sold_records WHERE id=?`).get(req.params.id);
+  if (!r) return res.status(404).json({ error: 'Not found' });
+  if (r.vehicle_id) {
+    db.prepare(`UPDATE vehicles SET status='available', at_dealership=1, updated_at=? WHERE id=?`)
+      .run(now(), r.vehicle_id);
+    db.prepare(`UPDATE vehicle_costs SET location='Dealership', updated_at=? WHERE vehicle_id=?`)
+      .run(now(), r.vehicle_id);
+  }
+  db.prepare(`DELETE FROM sold_records WHERE id=?`).run(req.params.id);
+  res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+//  Backup — owner-only JSON download + restore (merge/replace)
+// ---------------------------------------------------------------------------
+const BACKUP_TABLES = ['users','vehicles','vehicle_images','vehicle_costs','sold_records',
+  'financing_applications','contact_messages'];
+
+app.get('/api/backup', requireAuth, requireOwner, (req, res) => {
+  const data = { exported_at: new Date().toISOString() };
+  BACKUP_TABLES.forEach(t => data[t] = db.prepare(`SELECT * FROM ${t}`).all());
+  if (data.users) data.users = data.users.map(({password_hash, ...u}) => u); // never export hashes
+  res.setHeader('Content-Disposition',
+    `attachment; filename="amc-backup-${new Date().toISOString().slice(0,10)}.json"`);
+  res.json(data);
+});
+
+app.post('/api/restore', requireAuth, requireOwner, (req, res) => {
+  const { mode, data } = req.body || {};
+  if (!data || !['merge','replace'].includes(mode))
+    return res.status(400).json({ error: 'mode (merge|replace) and data required' });
+  const tables = BACKUP_TABLES.filter(t => t !== 'users' && Array.isArray(data[t]));
+  const tx = db.transaction(() => {
+    for (const t of tables) {
+      if (mode === 'replace') db.prepare(`DELETE FROM ${t}`).run();
+      const cols = db.prepare(`PRAGMA table_info(${t})`).all().map(c => c.name);
+      const pk = t === 'vehicle_costs' ? 'vehicle_id' : 'id';
+      for (const row of data[t]) {
+        if (mode === 'merge' && row[pk] != null &&
+            db.prepare(`SELECT 1 FROM ${t} WHERE ${pk}=?`).get(row[pk])) continue;
+        const keys = cols.filter(c => row[c] !== undefined);
+        db.prepare(`INSERT OR REPLACE INTO ${t} (${keys.join(',')}) VALUES (${keys.map(()=>'?').join(',')})`)
+          .run(...keys.map(k => row[k]));
+      }
+    }
+  });
+  try { tx(); res.json({ ok: true }); }
+  catch (e) { res.status(500).json({ error: 'Restore failed: ' + e.message }); }
+});
+
+// ---------------------------------------------------------------------------
+//  Admin + CRM pages
+// ---------------------------------------------------------------------------
+app.get('/admin', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/crm',   (_req, res) => res.sendFile(path.join(__dirname, 'public', 'crm.html')));
+app.get('/financing', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'financing.html')));
 
 // SPA-ish fallback for the public site
 app.get('*', (req, res, next) => {
