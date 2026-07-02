@@ -2,160 +2,165 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>CRM — Absolute Motor Cars</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
 <style>
-  .crm-shell { display: flex; min-height: 100vh; }
-  .crm-sidebar { width: 220px; background: var(--bg2); border-right: 1px solid var(--border); padding: 20px 0; display: flex; flex-direction: column; }
-  .crm-sidebar h3 { padding: 0 20px 16px; font-size: 0.7rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em; }
-  .crm-sidebar a { display: block; padding: 10px 20px; font-size: 0.85rem; color: var(--dim); border-left: 2px solid transparent; cursor: pointer; transition: all 0.15s; }
-  .crm-sidebar a:hover, .crm-sidebar a.active { color: var(--ink); border-left-color: var(--accent); background: rgba(224,18,12,0.08); }
-  .crm-sidebar .owner-only { display: none; }
-  .crm-sidebar.is-owner .owner-only { display: block; }
-  .crm-main { flex: 1; padding: 20px 24px; overflow-x: auto; }
+  .crm-shell { display: none; min-height: 100vh; }
+  .crm-shell.logged-in { display: flex; }
+  .crm-nav { width: 220px; background: var(--panel); border-right: 1px solid var(--line); padding: 28px 0; display: flex; flex-direction: column; }
+  .crm-nav h3 { padding: 0 24px 20px; font-family: 'Oswald'; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--red); font-weight: 600; }
+  .crm-nav a { display: flex; align-items: center; gap: 8px; padding: 10px 24px; font-family: 'Oswald'; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-left: 2px solid transparent; cursor: pointer; transition: .2s; }
+  .crm-nav a:hover, .crm-nav a.active { color: #fff; border-left-color: var(--red); background: rgba(224,18,12,.06); }
+  .crm-nav .owner-only { display: none; }
+  .crm-nav.is-owner .owner-only { display: flex; }
+  .crm-nav .logout-row { padding: 16px 24px; border-top: 1px solid var(--line); font-size: .78rem; color: var(--muted); font-family: 'Inter'; margin-top: auto; }
+  .crm-main { flex: 1; padding: 36px 40px; overflow-x: auto; }
   .crm-tab { display: none; }
   .crm-tab.active { display: block; }
-  .crm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-  .crm-header h1 { font-size: 1.3rem; }
-  .kpi-strip { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-  .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; min-width: 140px; }
-  .kpi-label { font-size: 0.65rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em; }
-  .kpi-value { font-size: 1.3rem; font-weight: 800; color: var(--accent); }
-  .prod-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr auto; gap: 16px; }
-  .prod-card-header { display: flex; align-items: start; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-  .prod-card-title { font-size: 1rem; font-weight: 700; }
-  .prod-card-detail { font-size: 0.8rem; color: var(--dim); }
-  .prod-card-meta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
-  .prod-card-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
-  .cost-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
-  .cost-item { display: flex; justify-content: space-between; font-size: 0.78rem; padding: 3px 6px; background: var(--bg); border-radius: 2px; }
-  .location-select select { background: var(--bg); color: var(--ink); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px 8px; font-size: 0.8rem; }
-  .location-dealership { border-left: 3px solid var(--success) !important; }
-  .location-auction { border-left: 3px solid #f59e0b !important; }
-  .location-mechanic { border-left: 3px solid #3b82f6 !important; }
-  .location-other { border-left: 3px solid var(--dim) !important; }
-  .ledger-table-wrap { overflow-x: auto; }
-  .ledger-table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 0.75rem; }
-  .ledger-table th { position: sticky; top: 0; background: var(--bg2); padding: 8px 10px; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--dim); border-bottom: 2px solid var(--border); text-align: right; white-space: nowrap; }
-  .ledger-table th:first-child { text-align: left; }
-  .ledger-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
-  .ledger-table td:first-child { text-align: left; font-weight: 600; background: var(--bg2); }
-  .ledger-table tr:hover td { background: rgba(255,255,255,0.02); }
-  .ledger-table tr:hover td:first-child { background: var(--bg2); }
-  .ledger-total td { font-weight: 800; border-top: 2px solid var(--accent); font-size: 0.8rem; }
-  .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); }
-  .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .checkbox-done { color: var(--success); font-weight: 700; font-size: 0.75rem; }
-  .checkbox-pending { color: var(--dim); font-size: 0.75rem; }
-  .search-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-  .search-row input { background: var(--bg2); border: 1px solid var(--border); color: var(--ink); padding: 8px 14px; border-radius: var(--radius); font-size: 0.85rem; min-width: 200px; }
-  .search-row select { background: var(--bg2); color: var(--ink); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px; font-size: 0.8rem; }
-  .modal-wide { max-width: 750px !important; }
-  .inspect-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 8px 0; }
-  .inspect-item { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; background: var(--bg); border-radius: 2px; font-size: 0.73rem; cursor: pointer; user-select: none; border: 1px solid transparent; }
-  .inspect-item:hover { border-color: var(--border); }
-  .inspect-item.C { color: var(--success); }
-  .inspect-item.N { color: var(--danger); }
-  .inspect-item.NA { color: var(--dim); }
-  .inspect-section-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--dim2); margin: 10px 0 4px; grid-column: 1/-1; }
-  @media (max-width: 768px) {
-    .crm-shell { flex-direction: column; }
-    .crm-sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 8px 0; }
-    .crm-sidebar a { padding: 8px 14px; font-size: 0.75rem; border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; }
-    .crm-sidebar a.active { border-bottom-color: var(--accent); }
-    .crm-main { padding: 12px; }
-    .prod-card { grid-template-columns: 1fr; }
-    .inspect-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* KPIs */
+  .kpi-row { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); padding: 18px 24px; min-width: 140px; }
+  .kpi .label { font-family: 'Oswald'; font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .kpi .value { font-family: 'Oswald'; font-size: 1.6rem; font-weight: 600; color: var(--red); margin-top: 4px; }
+
+  /* Production cards */
+  .prod-card { background: var(--panel); border: 1px solid var(--line); padding: 20px 24px; margin-bottom: 12px; position: relative; border-left: 3px solid var(--line); }
+  .prod-card.loc-dealership { border-left-color: #22c55e; }
+  .prod-card.loc-auction { border-left-color: #f59e0b; }
+  .prod-card.loc-mechanic { border-left-color: #3b82f6; }
+  .prod-card .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  .prod-card h4 { font-family: 'Oswald'; font-size: 1.05rem; font-weight: 600; text-transform: uppercase; color: var(--chrome-1); }
+  .prod-card .sub { font-size: .8rem; color: var(--muted); font-family: 'Inter'; margin-top: 3px; }
+  .prod-card .meta-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+  .prod-card .loc-sel select { padding: 5px 10px; border: 1px solid var(--line); background: var(--black); color: #fff; font-family: 'Inter'; font-size: .78rem; }
+  .prod-card .chk { cursor: pointer; font-family: 'Inter'; font-size: .78rem; }
+  .prod-card .chk.done { color: #22c55e; font-weight: 600; }
+  .prod-card .chk.pending { color: var(--muted); }
+  .prod-card .actions { display: flex; flex-direction: column; gap: 6px; }
+  .prod-card details { margin-top: 10px; }
+  .prod-card summary { cursor: pointer; font-family: 'Oswald'; font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--red); font-weight: 600; }
+  .cost-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 4px; margin-top: 8px; }
+  .cost-line { display: flex; justify-content: space-between; font-family: 'Inter'; font-size: .78rem; padding: 3px 8px; background: var(--black); }
+
+  /* Ledger / Sold tables */
+  .wide-table-wrap { overflow-x: auto; }
+  .wide-table { width: max-content; min-width: 100%; border-collapse: collapse; font-family: 'Inter'; font-size: .8rem; }
+  .wide-table th { padding: 10px 12px; font-family: 'Oswald'; font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--line); text-align: right; white-space: nowrap; }
+  .wide-table th:first-child { text-align: left; }
+  .wide-table td { padding: 7px 12px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  .wide-table td:first-child { text-align: left; font-weight: 600; }
+  .wide-table tr.total td { font-weight: 700; border-top: 2px solid var(--red); }
+
+  /* Inspection */
+  .insp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin: 8px 0; }
+  .insp-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; background: var(--black); font-family: 'Inter'; font-size: .7rem; cursor: pointer; user-select: none; border: 1px solid transparent; }
+  .insp-item:hover { border-color: var(--line); }
+  .insp-item.C { color: #22c55e; }
+  .insp-item.N { color: #ef4444; }
+  .insp-item.NA { color: var(--muted); }
+  .insp-section { font-family: 'Oswald'; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--chrome-2); font-weight: 600; margin: 10px 0 4px; }
+
+  /* Edit form */
+  .edit-form { background: var(--panel); border: 1px solid var(--line); padding: 28px; margin-bottom: 20px; }
+  .edit-form h3 { font-family: 'Oswald'; font-size: 1.1rem; text-transform: uppercase; color: var(--chrome-1); margin-bottom: 16px; }
+  .ef-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .ef-grid .field { margin: 0; }
+  .ef-grid .field label { display: block; font-family: 'Oswald'; font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .ef-grid .field input, .ef-grid .field select { width: 100%; padding: 8px 10px; border: 1px solid var(--line); background: var(--black); color: #fff; font-family: 'Inter'; font-size: .82rem; }
+  .ef-grid .field input:focus, .ef-grid .field select:focus { outline: none; border-color: var(--red); }
+
+  @media(max-width:768px) {
+    .crm-shell.logged-in { flex-direction: column; }
+    .crm-nav { width: 100%; flex-direction: row; overflow-x: auto; padding: 10px 8px; }
+    .crm-nav a { padding: 8px 14px; font-size: .72rem; border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; }
+    .crm-nav a.active { border-bottom-color: var(--red); }
+    .crm-main { padding: 20px 16px; }
+    .insp-grid { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
-<body style="background:var(--bg)">
+<body>
 
 <!-- LOGIN -->
-<div id="crm-login">
-  <div class="admin-login">
-    <div style="text-align:center;margin-bottom:16px;font-weight:800;font-size:1.1rem;color:var(--accent)">Absolute Motor Cars CRM</div>
-    <h2>Login</h2>
+<div class="login-page" id="crm-login-page">
+  <div class="login-card">
+    <a class="brand"><img src="/logo.png" alt="AMC"></a>
+    <h2>CRM Login</h2>
     <form id="crm-login-form">
-      <div class="form-group"><label>Username</label><input type="text" name="username" required autocomplete="username"></div>
-      <div class="form-group"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div>
-      <div class="alert hidden" id="crm-login-alert"></div>
-      <button type="submit" class="btn btn-primary btn-block">Log In</button>
+      <div class="field"><label>Username</label><input type="text" name="username" required autocomplete="username"></div>
+      <div class="field"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div>
+      <div class="alert" id="crm-login-alert"></div>
+      <button type="submit" class="btn btn-solid" style="width:100%;justify-content:center">Sign In</button>
     </form>
   </div>
 </div>
 
-<!-- CRM SHELL -->
-<div class="crm-shell" id="crm-shell" style="display:none">
-  <div class="crm-sidebar" id="crm-sidebar">
-    <h3 style="color:var(--accent);font-weight:800;font-size:0.85rem">AMC CRM</h3>
+<!-- SHELL -->
+<div class="crm-shell" id="crm-shell">
+  <div class="crm-nav" id="crm-nav">
+    <h3>AMC CRM</h3>
     <a class="active" data-tab="production">Production</a>
     <a class="owner-only" data-tab="ledger">Ledger</a>
     <a class="owner-only" data-tab="sold">Sold</a>
-    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:8px">
+    <div style="border-top:1px solid var(--line);padding-top:8px;margin:6px 0">
       <a href="/admin">→ Website Admin</a>
       <a href="/">→ Public Site</a>
     </div>
-    <div style="margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--dim)">
-      <div id="crm-sidebar-user"></div>
-      <button class="btn btn-sm" id="crm-logout-btn" style="margin-top:8px;width:100%">Log Out</button>
-      <button class="btn btn-sm owner-only" id="crm-backup-btn" style="margin-top:4px;width:100%">💾 Backup</button>
+    <div class="logout-row">
+      <div id="crm-nav-user" style="margin-bottom:6px"></div>
+      <button class="btn btn-ghost owner-only" style="width:100%;justify-content:center;padding:8px;font-size:.7rem;margin-bottom:4px" id="crm-backup-btn">💾 Backup</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:8px;font-size:.7rem" id="crm-logout-btn">Log Out</button>
     </div>
   </div>
 
   <div class="crm-main">
-    <!-- KPI strip -->
-    <div class="kpi-strip" id="crm-kpi">
-      <div class="kpi"><div class="kpi-label">In Production</div><div class="kpi-value" id="kpi-count">—</div></div>
-      <div class="kpi owner-only" id="kpi-capital-wrap"><div class="kpi-label">Capital Invested</div><div class="kpi-value" id="kpi-capital">—</div></div>
-      <div class="kpi owner-only" id="kpi-units-wrap"><div class="kpi-label">Units Sold</div><div class="kpi-value" id="kpi-units">—</div></div>
-      <div class="kpi owner-only" id="kpi-profit-wrap"><div class="kpi-label">Gross Profit</div><div class="kpi-value" id="kpi-profit">—</div></div>
+    <!-- KPIs -->
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">In Production</div><div class="value" id="kpi-count">—</div></div>
+      <div class="kpi owner-only" id="kpi-cap-wrap"><div class="label">Capital Invested</div><div class="value" id="kpi-capital">—</div></div>
+      <div class="kpi owner-only" id="kpi-sold-wrap"><div class="label">Units Sold</div><div class="value" id="kpi-sold">—</div></div>
+      <div class="kpi owner-only" id="kpi-profit-wrap"><div class="label">Gross Profit</div><div class="value" id="kpi-profit">—</div></div>
     </div>
 
-    <!-- PRODUCTION TAB -->
-    <div class="crm-tab active" id="crm-tab-production">
-      <div class="crm-header">
-        <h1>Production</h1>
-        <div style="display:flex;gap:8px">
-          <select id="prod-location-filter" style="background:var(--bg2);border:1px solid var(--border);color:var(--ink);border-radius:20px;padding:4px 12px;font-size:0.78rem">
-            <option value="all">All Locations</option>
-          </select>
-          <input type="text" id="prod-search" placeholder="Search stock, year, make, model..." style="background:var(--bg2);color:var(--ink);border:1px solid var(--border);padding:4px 12px;border-radius:20px;font-size:0.78rem;min-width:200px">
-        </div>
+    <!-- PRODUCTION -->
+    <div class="crm-tab active" id="tab-production">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <input type="text" id="prod-search" placeholder="Search stock, year, make, model…" style="padding:10px 14px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem;min-width:240px">
+        <select id="prod-loc-filter" style="padding:10px 14px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem">
+          <option value="all">All Locations</option>
+        </select>
       </div>
-      <div id="production-list"></div>
+      <div id="prod-list"></div>
     </div>
 
-    <!-- LEDGER TAB -->
-    <div class="crm-tab" id="crm-tab-ledger">
-      <div class="crm-header">
-        <h1>Ledger</h1>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="ledger-search" placeholder="Search..." style="background:var(--bg2);color:var(--ink);border:1px solid var(--border);padding:4px 12px;border-radius:20px;font-size:0.78rem;min-width:180px">
-          <button class="btn btn-sm" id="ledger-export">Export CSV</button>
-        </div>
+    <!-- LEDGER -->
+    <div class="crm-tab" id="tab-ledger">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <input type="text" id="ledger-search" placeholder="Search…" style="padding:10px 14px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem;min-width:200px">
+        <button class="btn btn-ghost" style="font-size:.72rem;padding:10px 16px" id="ledger-export">Export CSV</button>
       </div>
-      <div class="ledger-table-wrap" id="ledger-table-wrap"></div>
+      <div class="wide-table-wrap" id="ledger-wrap"></div>
     </div>
 
-    <!-- SOLD TAB -->
-    <div class="crm-tab" id="crm-tab-sold">
-      <div class="crm-header">
-        <h1>Sold</h1>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="sold-search" placeholder="Search buyer, seller, vehicle..." style="background:var(--bg2);color:var(--ink);border:1px solid var(--border);padding:4px 12px;border-radius:20px;font-size:0.78rem;min-width:180px">
-          <button class="btn btn-sm" id="sold-export">Export CSV</button>
-        </div>
+    <!-- SOLD -->
+    <div class="crm-tab" id="tab-sold">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <input type="text" id="sold-search" placeholder="Search buyer, seller, vehicle…" style="padding:10px 14px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem;min-width:200px">
+        <button class="btn btn-ghost" style="font-size:.72rem;padding:10px 16px" id="sold-export">Export CSV</button>
       </div>
-      <div class="ledger-table-wrap" id="sold-table-wrap"></div>
+      <div class="wide-table-wrap" id="sold-wrap"></div>
     </div>
   </div>
 </div>
 
-<!-- MODALS: Mark Sold, Inspection Report, Backup -->
-<div class="modal-overlay hidden" id="crm-modals"></div>
+<!-- MODAL ZONE -->
+<div id="crm-modals"></div>
 
 <script src="/crm.js"></script>
 </body>

@@ -2,137 +2,223 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Admin — Absolute Motor Cars</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
 <style>
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-  .form-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 600px) { .form-inline { grid-template-columns: 1fr; } }
-  .veh-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .admin-shell { display: none; min-height: 100vh; }
+  .admin-shell.logged-in { display: flex; }
+  .admin-nav { width: 220px; background: var(--panel); border-right: 1px solid var(--line); padding: 28px 0; display: flex; flex-direction: column; }
+  .admin-nav h3 { padding: 0 24px 20px; font-family: 'Oswald'; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--red); font-weight: 600; }
+  .admin-nav a { display: flex; align-items: center; gap: 8px; padding: 10px 24px; font-family: 'Oswald'; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-left: 2px solid transparent; cursor: pointer; transition: .2s; }
+  .admin-nav a:hover, .admin-nav a.active { color: #fff; border-left-color: var(--red); background: rgba(224,18,12,.06); }
+  .admin-nav .badge-dot { margin-left: auto; background: var(--red); color: #fff; font-size: .6rem; padding: 1px 7px; border-radius: 10px; font-family: 'Inter'; display: none; }
+  .admin-nav .spacer { flex: 1; }
+  .admin-nav .logout-row { padding: 16px 24px; border-top: 1px solid var(--line); font-size: .78rem; color: var(--muted); font-family: 'Inter'; }
+  .admin-main { flex: 1; padding: 36px 40px; overflow-x: auto; }
+  .admin-main h2 { font-family: 'Oswald'; font-size: 1.8rem; font-weight: 600; text-transform: uppercase; color: var(--chrome-1); margin-bottom: 28px; }
+  .admin-main h2 .chrome { font-size: 1.8rem; }
+  .admin-section { display: none; }
+  .admin-section.active { display: block; }
+
+  /* Login */
+  .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-card { background: var(--panel); border: 1px solid var(--line); padding: 48px 36px; width: 100%; max-width: 400px; }
+  .login-card .brand { justify-content: center; margin-bottom: 28px; }
+  .login-card h2 { font-family: 'Oswald'; font-size: 1.3rem; font-weight: 600; text-transform: uppercase; text-align: center; color: var(--chrome-1); margin-bottom: 24px; }
+  .login-card .field { margin-bottom: 16px; }
+  .login-card .field label { font-family: 'Oswald'; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; }
+  .login-card .field input { width: 100%; padding: 11px 12px; border: 1px solid var(--line); background: var(--black); color: #fff; font-family: 'Inter'; font-size: .92rem; }
+  .login-card .field input:focus { outline: none; border-color: var(--red); }
+  .login-card .alert { padding: 10px 14px; font-size: .82rem; font-family: 'Inter'; margin-bottom: 16px; display: none; }
+  .login-card .alert.show { display: block; }
+  .alert-error { background: rgba(239,68,68,.1); border: 1px solid #ef4444; color: #ef4444; }
+
+  /* Toolbar */
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .toolbar-left { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .toolbar input, .toolbar select { padding: 10px 14px; border: 1px solid var(--line); background: var(--black); color: #fff; font-family: 'Inter'; font-size: .85rem; }
+  .toolbar input:focus, .toolbar select:focus { outline: none; border-color: var(--red); }
+  .toolbar input { min-width: 240px; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-family: 'Inter'; font-size: .85rem; }
+  th { text-align: left; padding: 12px 14px; font-family: 'Oswald'; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--line); white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tr:hover td { background: rgba(255,255,255,.015); }
+  .cell-actions { display: flex; gap: 6px; }
+  .pill-sm { display: inline-block; padding: 3px 10px; font-family: 'Oswald'; font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
+  .pill-green { background: rgba(34,197,94,.15); color: #22c55e; }
+  .pill-amber { background: rgba(245,158,11,.15); color: #f59e0b; }
+  .pill-gray { background: rgba(138,138,146,.15); color: var(--muted); }
+
+  /* Forms */
+  .edit-panel { background: var(--panel); border: 1px solid var(--line); padding: 32px; margin-bottom: 28px; display: none; }
+  .edit-panel.open { display: block; }
+  .edit-panel h3 { font-family: 'Oswald'; font-size: 1.2rem; font-weight: 600; text-transform: uppercase; color: var(--chrome-1); margin-bottom: 20px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .form-grid .field { margin: 0; }
+  .form-grid .field label { display: block; font-family: 'Oswald'; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .form-grid .field input, .form-grid .field select { width: 100%; padding: 9px 10px; border: 1px solid var(--line); background: var(--black); color: #fff; font-family: 'Inter'; font-size: .85rem; }
+  .form-grid .field input:focus, .form-grid .field select:focus { outline: none; border-color: var(--red); }
+  .form-full { margin-top: 14px; }
+  .form-full label { display: block; font-family: 'Oswald'; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .form-full textarea { width: 100%; padding: 9px 10px; border: 1px solid var(--line); background: var(--black); color: #fff; font-family: 'Inter'; font-size: .85rem; resize: vertical; min-height: 80px; }
+  .form-full textarea:focus { outline: none; border-color: var(--red); }
+  .form-actions { display: flex; gap: 10px; margin-top: 18px; }
+
+  /* Image upload */
+  .img-zone { border: 2px dashed var(--line); padding: 30px; text-align: center; cursor: pointer; margin-top: 16px; color: var(--muted); font-family: 'Inter'; font-size: .85rem; transition: border .25s; }
+  .img-zone:hover { border-color: var(--red); }
+  .img-previews { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .img-previews .thumb { position: relative; width: 90px; height: 68px; }
+  .img-previews .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .img-previews .thumb .rm { position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; border-radius: 50%; background: #ef4444; color: #fff; border: none; font-size: .6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+  /* Financing cards */
+  .fin-card { background: var(--panel); border: 1px solid var(--line); padding: 20px 24px; margin-bottom: 12px; }
+  .fin-card .top { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 12px; }
+  .fin-card .top h4 { font-family: 'Oswald'; font-size: 1rem; font-weight: 600; text-transform: uppercase; color: var(--chrome-1); }
+  .fin-card .top .meta { font-size: .82rem; color: var(--muted); font-family: 'Inter'; }
+  .fin-card details { margin-top: 12px; }
+  .fin-card summary { cursor: pointer; font-family: 'Oswald'; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--red); font-weight: 600; }
+  .fin-card .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin-top: 10px; font-size: .8rem; font-family: 'Inter'; color: var(--muted); }
+
+  /* VIN decode */
+  .vin-row { display: flex; gap: 8px; align-items: center; }
+  .vin-row input { flex: 1; }
+  .vin-row button { padding: 8px 14px; font-family: 'Oswald'; font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; background: var(--panel); border: 1px solid var(--line); color: var(--muted); cursor: pointer; transition: .2s; }
+  .vin-row button:hover:not(:disabled) { border-color: var(--red); color: #fff; }
+  .vin-row button:disabled { opacity: .5; cursor: not-allowed; }
+
+  @media(max-width:768px) {
+    .admin-shell.logged-in { flex-direction: column; }
+    .admin-nav { width: 100%; flex-direction: row; overflow-x: auto; padding: 10px 8px; }
+    .admin-nav a { padding: 8px 14px; font-size: .72rem; border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; }
+    .admin-nav a.active { border-bottom-color: var(--red); }
+    .admin-main { padding: 20px 16px; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media(max-width:480px) { .form-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
-<body style="background:var(--bg)">
+<body>
 
-<!-- ======================================================================
-     LOGIN VIEW
-     ====================================================================== -->
-<div id="admin-login">
-  <div class="admin-login">
-    <div style="text-align:center;margin-bottom:16px;font-weight:800;font-size:1.1rem;color:var(--accent)">Absolute Motor Cars</div>
+<!-- LOGIN -->
+<div class="login-page" id="login-page">
+  <div class="login-card">
+    <a class="brand"><img src="/logo.png" alt="AMC"></a>
     <h2>Staff Login</h2>
     <form id="login-form">
-      <div class="form-group"><label>Username</label><input type="text" name="username" required autocomplete="username"></div>
-      <div class="form-group"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div>
-      <div class="alert hidden" id="login-alert"></div>
-      <button type="submit" class="btn btn-primary btn-block">Log In</button>
+      <div class="field"><label>Username</label><input type="text" name="username" required autocomplete="username"></div>
+      <div class="field"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div>
+      <div class="alert" id="login-alert"></div>
+      <button type="submit" class="btn btn-solid" style="width:100%;justify-content:center">Sign In</button>
     </form>
   </div>
 </div>
 
-<!-- ======================================================================
-     ADMIN SHELL (hidden until login)
-     ====================================================================== -->
+<!-- SHELL -->
 <div class="admin-shell" id="admin-shell">
-  <div class="admin-sidebar">
-    <h3 style="padding:0 20px 8px;color:var(--accent);font-weight:800;font-size:0.85rem">Absolute Motor Cars</h3>
+  <div class="admin-nav">
+    <h3>Absolute Motor Cars</h3>
     <a class="active" data-tab="inventory">Inventory</a>
-    <a data-tab="financing">Financing <span id="financing-badge" style="display:none;margin-left:auto;background:var(--accent);color:#fff;padding:1px 7px;font-size:0.65rem;border-radius:10px">0</span></a>
+    <a data-tab="financing">Financing <span class="badge-dot" id="fin-badge">0</span></a>
     <a data-tab="contacts">Contacts</a>
     <a data-tab="documents">Documents</a>
-    <div style="margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--dim)">
-      <div id="sidebar-user"></div>
-      <button class="btn btn-sm" id="logout-btn" style="margin-top:8px;width:100%">Log Out</button>
+    <div class="spacer"></div>
+    <div class="logout-row">
+      <div id="nav-user" style="margin-bottom:6px"></div>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:8px;font-size:.7rem" id="logout-btn">Log Out</button>
     </div>
   </div>
 
   <div class="admin-main">
-    <!-- INVENTORY TAB -->
-    <div class="tab-content active" id="tab-inventory">
-      <div class="admin-header">
-        <h1>Inventory</h1>
-        <button class="btn btn-primary btn-sm" id="add-vehicle-btn">+ Add Vehicle</button>
+    <!-- INVENTORY -->
+    <div class="admin-section active" id="sec-inventory">
+      <h2 class="chrome">Inventory</h2>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <input type="text" id="inv-search" placeholder="Search stock, year, make, model…">
+        </div>
+        <button class="btn btn-solid" id="add-vehicle-btn" style="font-size:.78rem;padding:12px 20px">+ Add Vehicle</button>
       </div>
 
-      <!-- Add/Edit form -->
-      <div id="vehicle-form" style="display:none;margin-bottom:24px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:24px">
-        <h3 id="veh-form-title" style="margin-bottom:16px">Add New Vehicle</h3>
+      <div class="edit-panel" id="vehicle-editor">
+        <h3 id="editor-title">Add New Vehicle</h3>
         <form id="veh-form">
-          <div class="veh-form-grid">
-            <div class="form-group"><label>Stock #</label><input type="text" name="stock_number"></div>
-            <div class="form-group"><label>VIN</label><div style="display:flex;gap:6px"><input type="text" name="vin" id="admin-vin" maxlength="17"><button type="button" class="btn btn-sm" id="admin-vin-decode" disabled>Decode</button></div><small id="admin-vin-counter" style="color:var(--dim)">0/17</small></div>
-            <div class="form-group"><label>Year *</label><input type="number" name="year" required></div>
-            <div class="form-group"><label>Make *</label><input type="text" name="make" required></div>
-            <div class="form-group"><label>Model *</label><input type="text" name="model" required></div>
-            <div class="form-group"><label>Trim</label><input type="text" name="trim"></div>
-            <div class="form-group"><label>Price *</label><input type="number" name="price" required></div>
-            <div class="form-group"><label>Mileage (km)</label><input type="number" name="mileage"></div>
-            <div class="form-group"><label>Exterior</label><input type="text" name="exterior"></div>
-            <div class="form-group"><label>Interior</label><input type="text" name="interior"></div>
-            <div class="form-group"><label>Engine</label><input type="text" name="engine"></div>
-            <div class="form-group"><label>Transmission</label><input type="text" name="transmission"></div>
-            <div class="form-group"><label>Drivetrain</label><input type="text" name="drivetrain"></div>
-            <div class="form-group"><label>Fuel</label><input type="text" name="fuel"></div>
-            <div class="form-group"><label>Status</label><select name="status"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option></select></div>
+          <div class="form-grid">
+            <div class="field"><label>Stock #</label><input name="stock_number"></div>
+            <div class="field"><label>VIN</label><div class="vin-row"><input name="vin" id="admin-vin" maxlength="17"><button type="button" id="vin-decode-btn" disabled>Decode</button></div><small id="vin-counter" style="color:var(--muted);font-size:.7rem;font-family:'Inter'">0/17</small></div>
+            <div class="field"><label>Year *</label><input type="number" name="year" required></div>
+            <div class="field"><label>Make *</label><input name="make" required></div>
+            <div class="field"><label>Model *</label><input name="model" required></div>
+            <div class="field"><label>Trim</label><input name="trim"></div>
+            <div class="field"><label>Price *</label><input type="number" name="price" required></div>
+            <div class="field"><label>Mileage (km)</label><input type="number" name="mileage"></div>
+            <div class="field"><label>Exterior</label><input name="exterior"></div>
+            <div class="field"><label>Interior</label><input name="interior"></div>
+            <div class="field"><label>Engine</label><input name="engine"></div>
+            <div class="field"><label>Transmission</label><input name="transmission"></div>
+            <div class="field"><label>Drivetrain</label><input name="drivetrain"></div>
+            <div class="field"><label>Fuel</label><input name="fuel"></div>
+            <div class="field"><label>Status</label><select name="status"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option></select></div>
           </div>
-          <div class="form-group"><label>Description</label><textarea name="description" rows="3"></textarea></div>
+          <div class="form-full"><label>Description</label><textarea name="description" rows="2"></textarea></div>
           <input type="hidden" name="id" id="veh-edit-id">
-          <div style="display:flex;gap:10px">
-            <button type="submit" class="btn btn-primary" id="veh-submit-btn">Save Vehicle</button>
-            <button type="button" class="btn" id="veh-cancel-btn">Cancel</button>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-solid" id="veh-submit">Save Vehicle</button>
+            <button type="button" class="btn btn-ghost" id="veh-cancel">Cancel</button>
           </div>
         </form>
-
-        <!-- Image upload (only when editing) -->
-        <div id="veh-images-section" style="display:none;margin-top:24px;padding-top:24px;border-top:1px solid var(--border)">
-          <h4 style="margin-bottom:12px">Images</h4>
-          <div class="images-upload-area" id="images-upload-area">
-            <div>Drop images here or click to upload</div>
-            <div style="font-size:0.75rem;margin-top:4px">Max 10MB each, up to 20 images</div>
-          </div>
-          <input type="file" id="images-input" multiple accept="image/*" style="display:none">
-          <div class="images-preview" id="images-preview"></div>
-          <div id="images-upload-status"></div>
+        <div id="img-section" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--line)">
+          <h4 style="font-family:'Oswald';font-size:.9rem;text-transform:uppercase;letter-spacing:.08em;color:var(--chrome-2);margin-bottom:10px">Images</h4>
+          <div class="img-zone" id="img-zone">Drop images here or click to upload (max 10 MB each)</div>
+          <input type="file" id="img-input" multiple accept="image/*" style="display:none">
+          <div class="img-previews" id="img-previews"></div>
         </div>
       </div>
 
-      <!-- Vehicle table -->
-      <table class="admin-table" id="inventory-table">
-        <thead><tr><th>Stock</th><th>Year</th><th>Make</th><th>Model</th><th>Price</th><th>Status</th><th>Images</th><th>Actions</th></tr></thead>
-        <tbody id="inventory-tbody"></tbody>
-      </table>
+      <div class="table-wrap"><table id="inv-table"><thead><tr><th>Stock</th><th>Vehicle</th><th>Price</th><th>Status</th><th>Img</th><th></th></tr></thead><tbody></tbody></table></div>
     </div>
 
-    <!-- FINANCING TAB -->
-    <div class="tab-content" id="tab-financing">
-      <div class="admin-header">
-        <h1>Financing Applications</h1>
-        <select id="financing-filter" style="background:var(--bg2);border:1px solid var(--border);color:var(--ink);padding:6px 10px;border-radius:var(--radius);font-size:0.82rem">
-          <option value="all">All</option><option value="new">New</option><option value="in_review">In Review</option><option value="approved">Approved</option><option value="archived">Archived</option>
-        </select>
-      </div>
-      <div id="financing-list"></div>
-    </div>
-
-    <!-- CONTACTS TAB -->
-    <div class="tab-content" id="tab-contacts">
-      <div class="admin-header"><h1>Contact Messages</h1></div>
-      <div id="contacts-list"></div>
-    </div>
-
-    <!-- DOCUMENTS TAB -->
-    <div class="tab-content" id="tab-documents">
-      <div class="admin-header"><h1>Documents</h1></div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
-        <div class="form-section" style="cursor:pointer" onclick="openWindowSticker()">
-          <div class="form-section-header">Window Sticker</div>
-          <div class="form-section-body" style="color:var(--dim)">Showroom price tag — print-ready, letter-size</div>
+    <!-- FINANCING -->
+    <div class="admin-section" id="sec-financing">
+      <h2 class="chrome">Financing Applications</h2>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <select id="fin-filter">
+            <option value="all">All</option><option value="new">New</option><option value="in_review">In Review</option><option value="approved">Approved</option><option value="archived">Archived</option>
+          </select>
         </div>
-        <div class="form-section" style="cursor:pointer" onclick="openBOSWaiver()">
-          <div class="form-section-header">Bill of Sale + Waiver</div>
-          <div class="form-section-body" style="color:var(--dim)">Combined BOS and Delivery Waiver documents</div>
+      </div>
+      <div id="fin-list"></div>
+    </div>
+
+    <!-- CONTACTS -->
+    <div class="admin-section" id="sec-contacts">
+      <h2 class="chrome">Contact Messages</h2>
+      <div id="contact-list"></div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div class="admin-section" id="sec-documents">
+      <h2 class="chrome">Documents</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:8px">
+        <div class="step" style="cursor:pointer" onclick="if(typeof openStickerModal==='function')openStickerModal()">
+          <div class="num" style="font-size:1.6rem">📋</div>
+          <h3>Window Sticker</h3>
+          <p>Showroom price tag — print-ready, letter size with logo and specs.</p>
+        </div>
+        <div class="step" style="cursor:pointer" onclick="if(typeof openBOSModal==='function')openBOSModal()">
+          <div class="num" style="font-size:1.6rem">📄</div>
+          <h3>Bill of Sale & Waiver</h3>
+          <p>Combined BOS with live totals and Delivery Waiver — both print-ready.</p>
         </div>
       </div>
     </div>
