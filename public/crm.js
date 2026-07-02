@@ -173,9 +173,11 @@ function renderProd() {
           ${isO ? `<details><summary>Costs: <strong style="color:var(--red)">$${tc.toLocaleString()}</strong> | GST: $${(v.gst_paid||0).toLocaleString()}</summary><div class="cost-grid">${COST_KEYS.map(k=>`<div class="cost-line"><span>${COST_LABELS[k]}</span><span>$${(v[k]||0).toLocaleString()}</span></div>`).join('')}</div></details>` : ''}
         </div>
         <div class="actions">
+          ${(v.location||'Auction') !== 'Dealership' ? `<button class="btn btn-ghost" style="font-size:.68rem;padding:6px 12px;color:#22c55e;border-color:rgba(34,197,94,.3)" onclick="moveToInventory('${v.vehicle_id||v.id}')">→ Inventory</button>` : ''}
           ${isO ? `<button class="btn btn-ghost" style="font-size:.68rem;padding:6px 12px" onclick="editCosts('${v.vehicle_id||v.id}')">Edit Costs</button>` : ''}
           <button class="btn btn-ghost" style="font-size:.68rem;padding:6px 12px" onclick="openInsp('${v.vehicle_id||v.id}')">Inspection</button>
           ${isO ? `<button class="btn btn-ghost" style="font-size:.68rem;padding:6px 12px;color:var(--red);border-color:var(--line-red)" onclick="soldDialog('${v.vehicle_id||v.id}')">Mark Sold</button>` : ''}
+          ${isO ? `<button class="btn btn-ghost" style="font-size:.68rem;padding:6px 12px;color:#ef4444;border-color:rgba(239,68,68,.3)" onclick="deleteCRMVehicle('${v.vehicle_id||v.id}')">Delete</button>` : ''}
         </div>
       </div>
     </div>`;
@@ -200,7 +202,7 @@ function showAddVehicle() {
           <p style="font-family:'Inter';font-size:.8rem;color:var(--muted);margin-bottom:16px">Vehicle starts hidden from website. Set location to <strong>Dealership</strong> when ready to list.</p>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Stock #</label><input id="av-stock" style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
-            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">VIN</label><input id="av-vin" maxlength="17" style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">VIN</label><div style="display:flex;gap:6px"><input id="av-vin" maxlength="17" style="flex:1;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"><button type="button" id="av-vin-decode" disabled style="padding:8px 12px;font-family:'Oswald';font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;background:var(--panel);border:1px solid var(--line);color:var(--muted);cursor:pointer;white-space:nowrap">Decode</button></div><small id="av-vin-counter" style="color:var(--muted);font-size:.7rem;font-family:'Inter';display:block;margin-top:2px">0/17</small></div>
             <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Year *</label><input type="number" id="av-year" required style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
             <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Make *</label><input id="av-make" required style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
             <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Model *</label><input id="av-model" required style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
@@ -220,6 +222,29 @@ function showAddVehicle() {
       </div>
     </div>`;
   document.getElementById('addveh-modal').addEventListener('click', function(e){ if(e.target===this)closeModal('addveh-modal'); });
+  // VIN decode
+  const avVin = document.getElementById('av-vin');
+  avVin.addEventListener('input', () => {
+    const l = avVin.value.replace(/\s/g,'').length;
+    document.getElementById('av-vin-counter').textContent = l+'/17';
+    document.getElementById('av-vin-decode').disabled = l !== 17;
+  });
+  document.getElementById('av-vin-decode').addEventListener('click', async () => {
+    const vin = avVin.value.replace(/\s/g,'');
+    if (vin.length !== 17) return;
+    const btn = document.getElementById('av-vin-decode');
+    btn.textContent = '…'; btn.disabled = true;
+    try {
+      const r = await fetch('https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/'+vin+'?format=json');
+      const d = await r.json();
+      const res = d.Results?.[0] || {};
+      if (res.Make) document.getElementById('av-make').value = tc(res.Make);
+      if (res.Model) document.getElementById('av-model').value = tc(res.Model);
+      if (res.ModelYear) document.getElementById('av-year').value = res.ModelYear;
+      btn.textContent = '✓'; btn.style.color = '#22c55e';
+    } catch { btn.textContent = '✗'; btn.style.color = '#ef4444'; }
+    setTimeout(() => { btn.textContent = 'Decode'; btn.disabled = false; btn.style.color = ''; }, 2000);
+  });
 }
 
 async function saveNewVehicle() {
@@ -247,9 +272,33 @@ async function saveNewVehicle() {
       engine: v.engine, transmission: v.transmission, drivetrain: v.drivetrain,
       images: v.images||[], created_at: v.created_at,
       purchase_price:0,icbc:0,detailing:0,transport:0,boost:0,tire:0,repair:0,windshield:0,afc_extra:0,misc_cost:0,sales_cost:0,gst_paid:0,
-      location: 'Dealership', registration_done:0, inspection_done:0,
+      location: 'Auction', registration_done:0, inspection_done:0,
     });
     closeModal('addveh-modal');
+    updateKPIs(); populateLocs(); renderProd();
+    saveData();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+// ============================================================================
+//  MOVE TO INVENTORY (set location to Dealership)
+// ============================================================================
+function moveToInventory(id) {
+  const v = CRM_VEHICLES.find(x => (x.vehicle_id||x.id)===id);
+  if (!v) return;
+  v.location = 'Dealership';
+  renderProd();
+  saveData();
+}
+
+// ============================================================================
+//  DELETE FROM CRM
+// ============================================================================
+async function deleteCRMVehicle(id) {
+  if (!confirm('Delete this vehicle from CRM and website? This cannot be undone.')) return;
+  try {
+    await api('/api/vehicles/'+id, { method: 'DELETE' });
+    CRM_VEHICLES = CRM_VEHICLES.filter(x => (x.vehicle_id||x.id) !== id);
     updateKPIs(); populateLocs(); renderProd();
     saveData();
   } catch(e) { alert('Error: '+e.message); }
