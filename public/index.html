@@ -134,6 +134,110 @@
   <div class="modal" id="detail-inner"></div>
 </div>
 
+<!-- Financing application modal -->
+<div class="modal-overlay hidden" id="fin-modal">
+  <div class="modal" style="max-width:680px;max-height:92vh;overflow-y:auto">
+    <div style="padding:32px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <h3 style="font-family:'Oswald';font-size:1.4rem;text-transform:uppercase;color:var(--chrome-1)">Financing Application</h3>
+        <button class="modal-close" style="position:static" onclick="document.getElementById('fin-modal').classList.add('hidden')">&times;</button>
+      </div>
+
+      <form id="fin-form">
+        <!-- Personal -->
+        <div style="margin-bottom:20px">
+          <h4 style="font-family:'Oswald';font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:12px">Personal Information</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="field"><label>First Name *</label><input type="text" name="first_name" required></div>
+            <div class="field"><label>Last Name *</label><input type="text" name="last_name" required></div>
+            <div class="field"><label>Email *</label><input type="email" name="email" required></div>
+            <div class="field"><label>Phone *</label><input type="tel" name="phone" required></div>
+            <div class="field"><label>Date of Birth</label><input type="date" name="date_of_birth"></div>
+            <div class="field"><label>Marital Status</label><select name="marital_status"><option value="">—</option><option>Single</option><option>Married</option><option>Common Law</option><option>Divorced</option><option>Widowed</option></select></div>
+          </div>
+          <div class="field" style="margin-top:10px"><label>SIN (optional — encrypted in transit)</label><input type="text" name="sin" placeholder="XXX-XXX-XXX" maxlength="11"></div>
+        </div>
+
+        <!-- Residence -->
+        <div style="margin-bottom:20px">
+          <h4 style="font-family:'Oswald';font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:12px">Residence</h4>
+          <div class="field"><label>Street Address *</label><input type="text" name="street_address" required></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">
+            <div class="field"><label>City *</label><input type="text" name="city" required></div>
+            <div class="field"><label>Province *</label><input type="text" name="province" required></div>
+            <div class="field"><label>Postal Code *</label><input type="text" name="postal_code" required></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+            <div class="field"><label>Housing Status</label><select name="housing_status"><option value="">—</option><option>Own</option><option>Rent</option><option>Living with Parents</option><option>Other</option></select></div>
+            <div class="field"><label>Monthly Payment</label><input type="number" name="monthly_housing_payment" placeholder="$"></div>
+            <div class="field"><label>Years at Address</label><input type="number" name="years_at_address" min="0"></div>
+            <div class="field"><label>Months</label><input type="number" name="months_at_address" min="0" max="11"></div>
+          </div>
+          <p style="font-size:.72rem;color:var(--muted);margin:6px 0;font-family:'Inter'">If less than 2 years at current address:</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="field"><label>Previous Address</label><input type="text" name="prev_street_address"></div>
+            <div class="field"><label>Previous City</label><input type="text" name="prev_city"></div>
+            <div class="field"><label>Previous Province</label><input type="text" name="prev_province"></div>
+            <div class="field"><label>Previous Postal Code</label><input type="text" name="prev_postal_code"></div>
+          </div>
+        </div>
+
+        <!-- Employment -->
+        <div style="margin-bottom:20px">
+          <h4 style="font-family:'Oswald';font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:12px">Employment</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="field"><label>Employment Status</label><select name="employment_status"><option value="">—</option><option>Full-time</option><option>Part-time</option><option>Self-employed</option><option>Retired</option><option>Unemployed</option><option>Other</option></select></div>
+            <div class="field"><label>Employer Name</label><input type="text" name="employer_name"></div>
+            <div class="field"><label>Job Title</label><input type="text" name="job_title"></div>
+            <div class="field"><label>Employer Phone</label><input type="tel" name="employer_phone"></div>
+            <div class="field"><label>Years Employed</label><input type="number" name="years_employed" min="0"></div>
+            <div class="field"><label>Months</label><input type="number" name="months_employed" min="0" max="11"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+            <div class="field"><label>Gross Monthly Income</label><input type="number" name="gross_monthly_income" placeholder="$"></div>
+            <div class="field"><label>Other Income</label><input type="number" name="other_income" placeholder="$"></div>
+          </div>
+          <div class="field" style="margin-top:10px"><label>Other Income Source</label><input type="text" name="other_income_source"></div>
+        </div>
+
+        <!-- Vehicle -->
+        <div style="margin-bottom:20px">
+          <h4 style="font-family:'Oswald';font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:12px">Vehicle of Interest</h4>
+          <div class="field"><label>Vehicle</label><input type="text" name="vehicle_of_interest" id="fin-vehicle-field" placeholder="e.g. 2020 Toyota Camry SE"></div>
+          <input type="hidden" name="vehicle_id" id="fin-vehicle-id">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+            <div class="field"><label>Down Payment</label><input type="number" name="down_payment" placeholder="$"></div>
+          </div>
+          <label class="consent" style="margin-top:8px"><input type="checkbox" name="has_trade_in" value="1" id="fin-has-trade"><span>I have a trade-in vehicle</span></label>
+          <div class="field" id="fin-trade-details" style="display:none;margin-top:8px"><label>Trade-in Details</label><textarea name="trade_in_details" rows="2" placeholder="Year, make, model, condition…"></textarea></div>
+        </div>
+
+        <!-- Co-Applicant -->
+        <div style="margin-bottom:20px">
+          <h4 style="font-family:'Oswald';font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:12px">Co-Applicant (optional)</h4>
+          <label class="consent"><input type="checkbox" name="has_co_applicant" value="1" id="fin-has-co"><span>Add co-applicant</span></label>
+          <div id="fin-co-fields" style="display:none;margin-top:10px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="field"><label>Co-Applicant Name</label><input type="text" name="co_applicant_name"></div>
+              <div class="field"><label>Relationship</label><input type="text" name="co_applicant_relationship"></div>
+            </div>
+            <div class="field" style="margin-top:10px"><label>Co-Applicant Phone</label><input type="tel" name="co_applicant_phone"></div>
+          </div>
+        </div>
+
+        <!-- Notes + Consent -->
+        <div style="margin-bottom:20px">
+          <div class="field"><label>Notes</label><textarea name="notes" rows="2" placeholder="Anything we should know…"></textarea></div>
+          <label class="consent"><input type="checkbox" name="consent_credit_check" value="1" required><span>I consent to a credit check for the purpose of this financing application. I understand my information will be handled securely and used only for this application. *</span></label>
+        </div>
+
+        <div id="fin-status" style="margin-bottom:14px;font-family:'Inter';font-size:.85rem"></div>
+        <button type="submit" class="btn btn-solid" style="width:100%;justify-content:center">Submit Application</button>
+      </form>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div class="wrap">
     <div class="foot-top">

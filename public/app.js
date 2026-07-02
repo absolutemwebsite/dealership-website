@@ -150,13 +150,19 @@ function renderDetail(v) {
       `).join('')}</div>
       ${v.description ? `<p style="color:var(--muted);line-height:1.7;margin-bottom:20px;font-family:'Inter'">${esc(v.description)}</p>` : ''}
       <div class="modal-actions">
-        <a href="#contact" class="btn btn-solid">Get Financing</a>
+        <button class="btn btn-solid" id="detail-financing">Apply for Financing</button>
         <a href="#contact" class="btn btn-ghost">Contact Us</a>
       </div>
     </div>`;
 
   // Close
   document.getElementById('modal-close-btn').addEventListener('click', closeDetail);
+
+  // Financing button opens financing modal
+  document.getElementById('detail-financing').addEventListener('click', () => {
+    closeDetail();
+    openFinancing(v);
+  });
 
   // Gallery nav
   if (detailImgs.length > 1) {
@@ -236,6 +242,77 @@ document.getElementById('lead').addEventListener('submit', async e => {
 
   btn.textContent = 'Send Request'; btn.disabled = false;
   setTimeout(() => { status.textContent = ''; }, 5000);
+});
+
+// ============================================================================
+//  FINANCING APPLICATION
+// ============================================================================
+function openFinancing(v) {
+  const modal = document.getElementById('fin-modal');
+  if (v) {
+    document.getElementById('fin-vehicle-field').value = `${v.year} ${v.make} ${v.model} ${v.trim||''}`;
+    document.getElementById('fin-vehicle-id').value = v.id;
+  } else {
+    document.getElementById('fin-vehicle-field').value = '';
+    document.getElementById('fin-vehicle-id').value = '';
+  }
+  document.getElementById('fin-form').reset();
+  document.getElementById('fin-status').textContent = '';
+  document.getElementById('fin-trade-details').style.display = 'none';
+  document.getElementById('fin-co-fields').style.display = 'none';
+  modal.classList.remove('hidden');
+}
+
+document.getElementById('fin-has-trade').addEventListener('change', function() {
+  document.getElementById('fin-trade-details').style.display = this.checked ? '' : 'none';
+});
+document.getElementById('fin-has-co').addEventListener('change', function() {
+  document.getElementById('fin-co-fields').style.display = this.checked ? '' : 'none';
+});
+
+document.getElementById('fin-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  const status = document.getElementById('fin-status');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  status.textContent = '';
+
+  const fd = new FormData(e.target);
+  const data = Object.fromEntries(fd);
+  data.has_trade_in = data.has_trade_in ? 1 : 0;
+  data.has_co_applicant = data.has_co_applicant ? 1 : 0;
+  data.consent_credit_check = data.consent_credit_check ? 1 : 0;
+  for (const k of ['monthly_housing_payment','years_at_address','months_at_address','years_employed','months_employed','gross_monthly_income','other_income','down_payment']) {
+    if (data[k]) data[k] = parseInt(data[k],10) || 0;
+  }
+
+  try {
+    const r = await fetch('/api/financing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!r.ok) throw new Error('Failed to submit');
+    status.style.color = '#22c55e';
+    status.textContent = 'Application submitted! We\'ll be in touch within 24 hours.';
+    e.target.reset();
+    setTimeout(() => document.getElementById('fin-modal').classList.add('hidden'), 2500);
+  } catch (err) {
+    status.style.color = '#ef4444';
+    status.textContent = 'Something went wrong. Please try again or call us directly.';
+  }
+  btn.disabled = false; btn.textContent = 'Submit Application';
+});
+
+// Wire nav CTA to financing modal
+document.querySelector('.nav-cta').addEventListener('click', e => {
+  e.preventDefault();
+  openFinancing();
+});
+
+// Close fin-modal on overlay click
+document.getElementById('fin-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
 });
 
 // ============================================================================
