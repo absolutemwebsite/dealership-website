@@ -141,6 +141,7 @@
     $('#vm-desc').textContent = v.description || '';
     $('#vm-ask').onclick = () => { closeOverlay('#vehicle-modal');
       openContact('general', `I'm interested in the ${v.year} ${v.make} ${v.model}${v.stock_number ? ' (Stock #'+v.stock_number+')' : ''}.`); };
+    $('#vm-fin').href = '/financing?vehicle=' + encodeURIComponent(v.id);
     renderGallery();
     openOverlay('#vehicle-modal');
   }

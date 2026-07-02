@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Financing Application — Absolute Motor Cars</title>
+<link rel="icon" href="/logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  .fin-wrap{max-width:760px;margin:0 auto;padding:110px 22px 80px}
+  .fin-sec{background:var(--panel);border:1px solid var(--line);padding:26px;margin-bottom:18px}
+  .fin-sec h3{color:var(--chrome-1);font-size:1.1rem;margin-bottom:6px}
+  .fin-sec .n{color:var(--red);margin-right:8px}
+  .hintline{color:var(--muted);font-size:.8rem;margin-bottom:14px}
+</style>
+</head>
+<body>
+<header id="head" class="scrolled"><div class="wrap nav">
+  <a href="/" class="brand"><img src="/logo.png" alt="Absolute Motor Cars"></a>
+  <a href="/" class="nav-cta" style="text-decoration:none">← Back to site</a>
+</div></header>
+
+<div class="fin-wrap">
+  <span class="eyebrow">Financing</span>
+  <h1 class="chrome" style="font-size:clamp(2rem,6vw,3.4rem);margin:14px 0 10px">Apply for financing.</h1>
+  <p style="color:var(--muted);margin-bottom:30px">Takes about 5 minutes. We work with multiple lenders — good credit, rebuilding, or new to Canada. Your information is sent securely to our team only.</p>
+
+  <form id="fin-form">
+    <div class="fin-sec"><h3><span class="n">1</span>Personal</h3>
+      <div class="two">
+        <div class="field"><label>First name *</label><input id="f-first" required></div>
+        <div class="field"><label>Last name *</label><input id="f-last" required></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Email *</label><input id="f-email" type="email" required></div>
+        <div class="field"><label>Phone *</label><input id="f-phone" type="tel" required></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Date of birth</label><input id="f-dob" type="date"></div>
+        <div class="field"><label>Marital status</label>
+          <select id="f-marital"><option value="">—</option><option>Single</option><option>Married</option>
+          <option>Common-law</option><option>Divorced</option><option>Widowed</option></select></div>
+      </div>
+      <div class="field"><label>SIN (optional — speeds up approval)</label><input id="f-sin" inputmode="numeric"></div>
+    </div>
+
+    <div class="fin-sec"><h3><span class="n">2</span>Residence</h3>
+      <div class="field"><label>Street address</label><input id="f-addr"></div>
+      <div class="two">
+        <div class="field"><label>City</label><input id="f-city"></div>
+        <div class="field"><label>Province</label><input id="f-prov" value="BC"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Postal code</label><input id="f-postal"></div>
+        <div class="field"><label>Housing</label>
+          <select id="f-housing"><option value="">—</option><option>Rent</option><option>Own</option>
+          <option>With family</option><option>Other</option></select></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Monthly housing payment ($)</label><input id="f-hpay" type="number"></div>
+        <div class="field"><label>Time at address</label>
+          <div style="display:flex;gap:8px">
+            <input id="f-yaddr" type="number" placeholder="Years" min="0">
+            <input id="f-maddr" type="number" placeholder="Months" min="0" max="11"></div></div>
+      </div>
+      <div id="prev-addr" style="display:none">
+        <div class="hintline">Less than 2 years — please add your previous address.</div>
+        <div class="field"><label>Previous street address</label><input id="f-paddr"></div>
+        <div class="two">
+          <div class="field"><label>City</label><input id="f-pcity"></div>
+          <div class="field"><label>Province</label><input id="f-pprov"></div>
+        </div>
+        <div class="field"><label>Postal code</label><input id="f-ppostal"></div>
+      </div>
+    </div>
+
+    <div class="fin-sec"><h3><span class="n">3</span>Employment</h3>
+      <div class="two">
+        <div class="field"><label>Status</label>
+          <select id="f-empstatus"><option value="">—</option><option>Full-time</option><option>Part-time</option>
+          <option>Self-employed</option><option>Retired</option><option>Student</option><option>Other</option></select></div>
+        <div class="field"><label>Employer</label><input id="f-employer"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Job title</label><input id="f-title"></div>
+        <div class="field"><label>Employer phone</label><input id="f-ephone" type="tel"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Time employed</label>
+          <div style="display:flex;gap:8px">
+            <input id="f-yemp" type="number" placeholder="Years" min="0">
+            <input id="f-memp" type="number" placeholder="Months" min="0" max="11"></div></div>
+        <div class="field"><label>Gross monthly income ($)</label><input id="f-income" type="number"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Other income ($/mo)</label><input id="f-oincome" type="number"></div>
+        <div class="field"><label>Other income source</label><input id="f-osource"></div>
+      </div>
+    </div>
+
+    <div class="fin-sec"><h3><span class="n">4</span>Vehicle of Interest</h3>
+      <div class="field"><label>Vehicle</label><select id="f-vehicle"><option value="">Not sure yet — help me choose</option></select></div>
+      <div class="field"><label>Down payment ($)</label><input id="f-down" type="number"></div>
+      <label class="consent" style="margin:4px 0 0"><input type="checkbox" id="f-hastrade">
+        <span>I have a trade-in</span></label>
+      <div class="field" id="trade-wrap" style="display:none">
+        <label>Trade-in details (year, make, model, condition, approx. km)</label>
+        <textarea id="f-trade"></textarea></div>
+    </div>
+
+    <div class="fin-sec"><h3><span class="n">5</span>Co-Applicant</h3>
+      <label class="consent" style="margin:0 0 4px"><input type="checkbox" id="f-hasco">
+        <span>Add a co-applicant</span></label>
+      <div id="co-wrap" style="display:none">
+        <div class="two">
+          <div class="field"><label>Co-applicant name</label><input id="f-coname"></div>
+          <div class="field"><label>Relationship</label><input id="f-corel"></div>
+        </div>
+        <div class="field"><label>Co-applicant phone</label><input id="f-cophone" type="tel"></div>
+      </div>
+    </div>
+
+    <div class="fin-sec"><h3><span class="n">6</span>Notes &amp; Consent</h3>
+      <div class="field"><label>Anything else we should know? (optional)</label><textarea id="f-notes"></textarea></div>
+      <label class="consent"><input type="checkbox" id="f-consent" required>
+        <span>I consent to GP Auto Sales Ltd. DBA Absolute Motor Cars obtaining my credit report and sharing my
+        information with lenders for the purpose of arranging financing. *</span></label>
+      <button type="submit" class="btn btn-solid">Submit Application</button>
+      <div class="form-msg" id="f-msg"></div>
+    </div>
+  </form>
+</div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const num=id=>{const v=$(id).value;return v===''?null:+v};
+const txt=id=>$(id).value.trim()||null;
+
+// vehicle picker from live inventory
+fetch('/api/vehicles').then(r=>r.json()).then(list=>{
+  const sel=$('#f-vehicle');
+  list.forEach(v=>{const o=document.createElement('option');
+    o.value=v.id; o.dataset.label=`${v.year} ${v.make} ${v.model} ${v.trim||''}`.trim();
+    o.textContent=`${o.dataset.label}${v.stock_number?' — Stock #'+v.stock_number:''} — $${Number(v.price).toLocaleString()}`;
+    sel.appendChild(o);});
+  const pre=new URLSearchParams(location.search).get('vehicle');
+  if(pre) sel.value=pre;
+}).catch(()=>{});
+
+const chk=(id,wrap)=>$(id).addEventListener('change',e=>$(wrap).style.display=e.target.checked?'':'none');
+chk('#f-hastrade','#trade-wrap'); chk('#f-hasco','#co-wrap');
+const addrTime=()=>{const y=+($('#f-yaddr').value||0);$('#prev-addr').style.display=(y<2&&$('#f-yaddr').value!=='')?'':'none'};
+$('#f-yaddr').addEventListener('input',addrTime);
+
+$('#fin-form').addEventListener('submit',async e=>{
+  e.preventDefault(); const m=$('#f-msg'); m.textContent=''; m.className='form-msg';
+  const sel=$('#f-vehicle'), opt=sel.selectedOptions[0];
+  const body={first_name:txt('#f-first'),last_name:txt('#f-last'),email:txt('#f-email'),phone:txt('#f-phone'),
+    date_of_birth:txt('#f-dob'),sin:txt('#f-sin'),marital_status:txt('#f-marital'),
+    street_address:txt('#f-addr'),city:txt('#f-city'),province:txt('#f-prov'),postal_code:txt('#f-postal'),
+    housing_status:txt('#f-housing'),monthly_housing_payment:num('#f-hpay'),
+    years_at_address:num('#f-yaddr'),months_at_address:num('#f-maddr'),
+    prev_street_address:txt('#f-paddr'),prev_city:txt('#f-pcity'),prev_province:txt('#f-pprov'),prev_postal_code:txt('#f-ppostal'),
+    employment_status:txt('#f-empstatus'),employer_name:txt('#f-employer'),job_title:txt('#f-title'),
+    employer_phone:txt('#f-ephone'),years_employed:num('#f-yemp'),months_employed:num('#f-memp'),
+    gross_monthly_income:num('#f-income'),other_income:num('#f-oincome'),other_income_source:txt('#f-osource'),
+    vehicle_id:sel.value||null,vehicle_of_interest:opt&&opt.dataset.label||null,down_payment:num('#f-down'),
+    has_trade_in:$('#f-hastrade').checked?1:0,trade_in_details:txt('#f-trade'),
+    has_co_applicant:$('#f-hasco').checked?1:0,co_applicant_name:txt('#f-coname'),
+    co_applicant_relationship:txt('#f-corel'),co_applicant_phone:txt('#f-cophone'),
+    consent_credit_check:$('#f-consent').checked?1:0,notes:txt('#f-notes')};
+  const btn=e.target.querySelector('button[type=submit]'); btn.disabled=true;
+  try{
+    const r=await fetch('/api/financing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok) throw 0;
+    m.textContent="Application received — we'll be in touch shortly. Thank you!"; m.classList.add('ok');
+    e.target.reset(); scrollTo({top:0,behavior:'smooth'});
+  }catch{ m.textContent='Something went wrong. Please call us at 778.855.4903.'; m.classList.add('err'); }
+  finally{ btn.disabled=false; }
+});
+})();
+</script>
+</body>
+</html>

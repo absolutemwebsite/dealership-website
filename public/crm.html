@@ -1,169 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CRM — Absolute Motor Cars</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css">
+<link rel="icon" href="/logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  .crm-shell { display: none; min-height: 100vh; }
-  .crm-shell.logged-in { display: flex; }
-  .crm-nav { width: 220px; background: var(--panel); border-right: 1px solid var(--line); padding: 28px 0; display: flex; flex-direction: column; }
-  .crm-nav h3 { padding: 0 24px 20px; font-family: 'Oswald'; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--red); font-weight: 600; }
-  .crm-nav a { display: flex; align-items: center; gap: 8px; padding: 10px 24px; font-family: 'Oswald'; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-left: 2px solid transparent; cursor: pointer; transition: .2s; }
-  .crm-nav a:hover, .crm-nav a.active { color: #fff; border-left-color: var(--red); background: rgba(224,18,12,.06); }
-  .crm-nav .owner-only { display: none; }
-  .crm-nav.is-owner .owner-only { display: flex; }
-  .crm-nav .logout-row { padding: 16px 24px; border-top: 1px solid var(--line); font-size: .78rem; color: var(--muted); font-family: 'Inter'; margin-top: auto; }
-  .crm-main { flex: 1; padding: 36px 40px; overflow-x: auto; }
-  .crm-tab { display: none; }
-  .crm-tab.active { display: block; }
-
-  /* KPIs */
-  .kpi-row { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
-  .kpi { background: var(--panel); border: 1px solid var(--line); padding: 18px 24px; min-width: 140px; }
-  .kpi .label { font-family: 'Oswald'; font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-  .kpi .value { font-family: 'Oswald'; font-size: 1.6rem; font-weight: 600; color: var(--red); margin-top: 4px; }
-
-  /* Production cards */
-  .prod-card { background: var(--panel); border: 1px solid var(--line); padding: 20px 24px; margin-bottom: 12px; position: relative; border-left: 3px solid var(--line); }
-  .prod-card.loc-dealership { border-left-color: #22c55e; }
-  .prod-card.loc-auction { border-left-color: #f59e0b; }
-  .prod-card.loc-mechanic { border-left-color: #3b82f6; }
-  .prod-card .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
-  .prod-card h4 { font-family: 'Oswald'; font-size: 1.05rem; font-weight: 600; text-transform: uppercase; color: var(--chrome-1); }
-  .prod-card .sub { font-size: .8rem; color: var(--muted); font-family: 'Inter'; margin-top: 3px; }
-  .prod-card .meta-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
-  .prod-card .loc-sel select { padding: 5px 10px; border: 1px solid var(--line); background: var(--black); color: #fff; font-family: 'Inter'; font-size: .78rem; }
-  .prod-card .chk { cursor: pointer; font-family: 'Inter'; font-size: .78rem; }
-  .prod-card .chk.done { color: #22c55e; font-weight: 600; }
-  .prod-card .chk.pending { color: var(--muted); }
-  .prod-card .actions { display: flex; flex-direction: column; gap: 6px; }
-  .prod-card details { margin-top: 10px; }
-  .prod-card summary { cursor: pointer; font-family: 'Oswald'; font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--red); font-weight: 600; }
-  .cost-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 4px; margin-top: 8px; }
-  .cost-line { display: flex; justify-content: space-between; font-family: 'Inter'; font-size: .78rem; padding: 3px 8px; background: var(--black); }
-
-  /* Ledger / Sold tables */
-  .wide-table-wrap { overflow-x: auto; }
-  .wide-table { width: max-content; min-width: 100%; border-collapse: collapse; font-family: 'Inter'; font-size: .8rem; }
-  .wide-table th { padding: 10px 12px; font-family: 'Oswald'; font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--line); text-align: right; white-space: nowrap; }
-  .wide-table th:first-child { text-align: left; }
-  .wide-table td { padding: 7px 12px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
-  .wide-table td:first-child { text-align: left; font-weight: 600; }
-  .wide-table tr.total td { font-weight: 700; border-top: 2px solid var(--red); }
-
-  /* Inspection */
-  .insp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin: 8px 0; }
-  .insp-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; background: var(--black); font-family: 'Inter'; font-size: .7rem; cursor: pointer; user-select: none; border: 1px solid transparent; }
-  .insp-item:hover { border-color: var(--line); }
-  .insp-item.C { color: #22c55e; }
-  .insp-item.N { color: #ef4444; }
-  .insp-item.NA { color: var(--muted); }
-  .insp-section { font-family: 'Oswald'; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--chrome-2); font-weight: 600; margin: 10px 0 4px; }
-
-  /* Edit form */
-  .edit-form { background: var(--panel); border: 1px solid var(--line); padding: 28px; margin-bottom: 20px; }
-  .edit-form h3 { font-family: 'Oswald'; font-size: 1.1rem; text-transform: uppercase; color: var(--chrome-1); margin-bottom: 16px; }
-  .ef-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-  .ef-grid .field { margin: 0; }
-  .ef-grid .field label { display: block; font-family: 'Oswald'; font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-  .ef-grid .field input, .ef-grid .field select { width: 100%; padding: 8px 10px; border: 1px solid var(--line); background: var(--black); color: #fff; font-family: 'Inter'; font-size: .82rem; }
-  .ef-grid .field input:focus, .ef-grid .field select:focus { outline: none; border-color: var(--red); }
-
-  @media(max-width:768px) {
-    .crm-shell.logged-in { flex-direction: column; }
-    .crm-nav { width: 100%; flex-direction: row; overflow-x: auto; padding: 10px 8px; }
-    .crm-nav a { padding: 8px 14px; font-size: .72rem; border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; }
-    .crm-nav a.active { border-bottom-color: var(--red); }
-    .crm-main { padding: 20px 16px; }
-    .insp-grid { grid-template-columns: repeat(2, 1fr); }
-  }
+:root{--black:#0a0a0b;--panel:#121214;--panel2:#1a1a1d;--red:#e0120c;--red-deep:#b00d08;
+--text:#e6e6e8;--muted:#8a8a92;--line:rgba(255,255,255,.1);--ok:#22c55e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--black);color:var(--text);font-size:14px;line-height:1.5}
+h1,h2,h3{font-family:Oswald;text-transform:uppercase;font-weight:600;letter-spacing:.02em}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{padding:8px 10px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:inherit;font-size:13px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red)}
+label{display:block;font-family:Oswald;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:8px 0 3px}
+.btn{padding:9px 16px;border:0;font-family:Oswald;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red-deep)}
+.btn-ghost{background:none;border:1px solid var(--line);color:var(--text)}.btn-ghost:hover{border-color:var(--red)}
+.btn-sm{padding:5px 10px;font-size:.66rem}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+header{background:var(--panel);border-bottom:1px solid var(--line)}
+.topbar{display:flex;align-items:center;gap:16px;height:62px}
+.topbar img{height:34px}
+.topbar .who{margin-left:auto;color:var(--muted);font-size:.78rem}
+.kpis{display:flex;gap:14px;padding:14px 0;flex-wrap:wrap}
+.kpi{background:var(--panel);border:1px solid var(--line);padding:12px 18px;min-width:150px}
+.kpi .k{font-family:Oswald;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font-family:Oswald;font-size:1.4rem;color:#fff}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tab{padding:12px 18px;background:none;border:0;color:var(--muted);font-family:Oswald;font-size:.76rem;
+letter-spacing:.1em;text-transform:uppercase;border-bottom:2px solid transparent}
+.tab.on{color:#fff;border-bottom-color:var(--red)}
+main{padding:20px 0 90px}
+.toolrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.toolrow input[type=search]{max-width:280px}
+.chip{border:1px solid var(--line);background:none;color:var(--muted);padding:7px 13px;font-family:Oswald;
+font-size:.68rem;letter-spacing:.06em;text-transform:uppercase}
+.chip.on{background:var(--red);border-color:var(--red);color:#fff}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);padding:16px}
+.card h3{font-size:1.05rem;color:#fff}
+.card .stk{font-family:Oswald;font-size:.68rem;letter-spacing:.12em;color:var(--red)}
+.card .meta{color:var(--muted);font-size:.8rem;margin:2px 0 10px}
+.loc{width:100%;font-family:Oswald;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
+.loc.Dealership{border-color:#14532d;color:#86efac}.loc.Auction{border-color:#57430a;color:#fde68a}
+.loc[class*="Mechanic"],.loc[class*="Body"]{border-color:#7c2d12;color:#fdba74}
+.loc[class*="Detail"]{border-color:#1e3a5f;color:#93c5fd}
+.loc[class*="Customer"],.loc[class*="Owner"]{border-color:#4c1d95;color:#c4b5fd}
+.costs{margin:10px 0;border-top:1px solid var(--line);padding-top:8px}
+.costs summary{cursor:pointer;font-family:Oswald;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.costs .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.tot-line{display:flex;justify-content:space-between;font-family:Oswald;margin-top:8px}
+.tot-line b{color:#fff}.gst-line{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted)}
+.flags{display:flex;gap:14px;margin:10px 0}
+.flags label{display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;font-size:.72rem}
+.flags input{width:auto;accent-color:var(--red)}
+.cardbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:Oswald;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);position:sticky;top:0;background:var(--black)}
+.scrollx{overflow-x:auto;border:1px solid var(--line)}
+tfoot td{font-weight:700;color:#fff;border-top:2px solid var(--line)}
+.drawer{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;z-index:80;justify-content:flex-end}
+.drawer.open{display:flex}
+.drawer .inner{background:var(--panel);border-left:1px solid var(--line);width:min(560px,96vw);height:100%;overflow-y:auto;padding:22px}
+.insp-sec{margin-bottom:12px}
+.insp-sec h4{font-family:Oswald;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px}
+.insp-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--line);font-size:.8rem}
+.insp-item .opts{display:flex;gap:4px}
+.insp-item button{width:34px;padding:3px 0;font-size:.66rem;background:none;border:1px solid var(--line);color:var(--muted)}
+.insp-item button.on{background:var(--red);border-color:var(--red);color:#fff}
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center}
+#login form{background:var(--panel);border:1px solid var(--line);padding:36px;width:min(360px,92vw)}
+#login img{height:48px;display:block;margin:0 auto 18px}
+.msg{font-size:.8rem;margin-top:8px;min-height:16px}.msg.ok{color:var(--ok)}.msg.err{color:#ef4444}
+.owner-only{display:none}
+body.owner .owner-only{display:revert}
+@media(max-width:700px){.cards{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div class="login-page" id="crm-login-page">
-  <div class="login-card">
-    <a class="brand"><img src="/logo.png" alt="AMC"></a>
-    <h2>CRM Login</h2>
-    <form id="crm-login-form">
-      <div class="field"><label>Username</label><input type="text" name="username" required autocomplete="username"></div>
-      <div class="field"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div>
-      <div class="alert" id="crm-login-alert"></div>
-      <button type="submit" class="btn btn-solid" style="width:100%;justify-content:center">Sign In</button>
-    </form>
-  </div>
+<div id="login">
+  <form id="login-form">
+    <img src="/logo.png" alt=""><h2 style="text-align:center;margin-bottom:14px">CRM Login</h2>
+    <label>Username</label><input id="l-user" required>
+    <label>Password</label><input id="l-pass" type="password" required>
+    <button class="btn btn-red" style="width:100%;margin-top:16px">Sign In</button>
+    <div class="msg" id="l-msg"></div>
+  </form>
 </div>
 
-<!-- SHELL -->
-<div class="crm-shell" id="crm-shell">
-  <div class="crm-nav" id="crm-nav">
-    <h3>AMC CRM</h3>
-    <a class="active" data-tab="production">Production</a>
-    <a class="owner-only" data-tab="ledger">Ledger</a>
-    <a class="owner-only" data-tab="sold">Sold</a>
-    <div style="border-top:1px solid var(--line);padding-top:8px;margin:6px 0">
-      <a href="/admin">→ Website Admin</a>
-      <a href="/">→ Public Site</a>
-    </div>
-    <div class="logout-row">
-      <div id="crm-nav-user" style="margin-bottom:6px"></div>
-      <button class="btn btn-ghost owner-only" style="width:100%;justify-content:center;padding:8px;font-size:.7rem;margin-bottom:4px" id="crm-backup-btn">💾 Backup</button>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:8px;font-size:.7rem" id="crm-logout-btn">Log Out</button>
-    </div>
+<div id="app" style="display:none">
+  <header><div class="wrap topbar">
+    <img src="/logo.png" alt=""><h2 style="font-size:.95rem">Production &amp; Sales CRM</h2>
+    <span class="who">Signed in as <b id="who"></b> · <a href="/admin" style="color:var(--red)">Admin</a>
+      <span class="owner-only"> · <button class="btn btn-ghost btn-sm" id="bk-dl">Download backup</button>
+      <button class="btn btn-ghost btn-sm" id="bk-rs">Restore</button>
+      <input type="file" id="bk-file" accept="application/json" style="display:none;width:auto"></span>
+      · <button class="btn btn-ghost btn-sm" id="logout">Log out</button></span>
   </div>
+  <div class="wrap kpis" id="kpis"></div>
+  <div class="wrap tabs">
+    <button class="tab on" data-tab="prod">Production</button>
+    <button class="tab owner-only" data-tab="ledger">Ledger</button>
+    <button class="tab owner-only" data-tab="sold">Sold</button>
+  </div></header>
 
-  <div class="crm-main">
-    <!-- KPIs -->
-    <div class="kpi-row">
-      <div class="kpi"><div class="label">In Production</div><div class="value" id="kpi-count">—</div></div>
-      <div class="kpi owner-only" id="kpi-cap-wrap"><div class="label">Capital Invested</div><div class="value" id="kpi-capital">—</div></div>
-      <div class="kpi owner-only" id="kpi-sold-wrap"><div class="label">Units Sold</div><div class="value" id="kpi-sold">—</div></div>
-      <div class="kpi owner-only" id="kpi-profit-wrap"><div class="label">Gross Profit</div><div class="value" id="kpi-profit">—</div></div>
-    </div>
-
-    <!-- PRODUCTION -->
-    <div class="crm-tab active" id="tab-production">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-        <div style="display:flex;gap:8px">
-          <input type="text" id="prod-search" placeholder="Search stock, year, make, model…" style="padding:10px 14px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem;min-width:240px">
-          <select id="prod-loc-filter" style="padding:10px 14px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem">
-            <option value="all">All Locations</option>
-          </select>
-        </div>
-        <button class="btn btn-solid" style="font-size:.78rem;padding:10px 20px" id="crm-add-vehicle">+ Add Vehicle</button>
+  <main class="wrap">
+    <section id="tab-prod">
+      <div class="toolrow">
+        <input type="search" id="q-prod" placeholder="Search stock, year, make, model…">
+        <span id="loc-chips"></span>
       </div>
-      <div id="prod-list"></div>
-    </div>
+      <div class="cards" id="prod-cards"></div>
+    </section>
 
-    <!-- LEDGER -->
-    <div class="crm-tab" id="tab-ledger">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-        <input type="text" id="ledger-search" placeholder="Search…" style="padding:10px 14px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem;min-width:200px">
-        <button class="btn btn-ghost" style="font-size:.72rem;padding:10px 16px" id="ledger-export">Export CSV</button>
-      </div>
-      <div class="wide-table-wrap" id="ledger-wrap"></div>
-    </div>
+    <section id="tab-ledger" style="display:none">
+      <div class="toolrow"><input type="search" id="q-ledger" placeholder="Search…"></div>
+      <div class="scrollx"><table id="ledger-table"></table></div>
+    </section>
 
-    <!-- SOLD -->
-    <div class="crm-tab" id="tab-sold">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-        <input type="text" id="sold-search" placeholder="Search buyer, seller, vehicle…" style="padding:10px 14px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem;min-width:200px">
-        <button class="btn btn-ghost" style="font-size:.72rem;padding:10px 16px" id="sold-export">Export CSV</button>
-      </div>
-      <div class="wide-table-wrap" id="sold-wrap"></div>
-    </div>
-  </div>
+    <section id="tab-sold" style="display:none">
+      <div class="toolrow"><input type="search" id="q-sold" placeholder="Search vehicle, buyer, seller…"></div>
+      <div class="scrollx"><table id="sold-table"></table></div>
+    </section>
+  </main>
 </div>
 
-<!-- MODAL ZONE -->
-<div id="crm-modals"></div>
+<!-- inspection drawer -->
+<div class="drawer" id="insp-drawer"><div class="inner">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h3 id="insp-title" style="font-size:1rem"></h3>
+    <button class="btn btn-ghost btn-sm" id="insp-close">Close</button></div>
+  <label>Odometer at inspection (km)</label><input id="insp-odo" type="number">
+  <div style="display:flex;gap:10px;align-items:center;margin:10px 0">
+    <span id="insp-count" style="color:var(--muted);font-size:.78rem"></span>
+    <button class="btn btn-ghost btn-sm" id="insp-bulk">Mark rest Complies</button>
+  </div>
+  <div id="insp-items"></div>
+  <label>Technician comments</label><textarea id="insp-comments" rows="3"></textarea>
+  <div style="display:flex;gap:10px;margin-top:14px">
+    <button class="btn btn-red" id="insp-save">Save</button>
+    <button class="btn btn-ghost" id="insp-print">Print Report (PDF)</button>
+  </div>
+  <div class="msg" id="insp-msg"></div>
+</div></div>
+
+<!-- mark sold drawer -->
+<div class="drawer" id="sold-drawer"><div class="inner">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h3 id="sold-title" style="font-size:1rem">Mark Sold</h3>
+    <button class="btn btn-ghost btn-sm" id="sold-close">Close</button></div>
+  <input type="hidden" id="sd-vid">
+  <label>Sale date</label><input id="sd-date" type="date">
+  <label>Selling price ($)</label><input id="sd-price" type="number">
+  <label>Reserve (non-GST) ($)</label><input id="sd-reserve" type="number">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div><label>GST collected ($)</label><input id="sd-gst" type="number"></div>
+    <div><label>PST collected ($)</label><input id="sd-pst" type="number"></div>
+  </div>
+  <label>Buyer name</label><input id="sd-bname">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div><label>Buyer phone</label><input id="sd-bphone"></div>
+    <div><label>Buyer email</label><input id="sd-bemail"></div>
+  </div>
+  <button class="btn btn-red" style="margin-top:14px" id="sd-save">Confirm Sold</button>
+  <div class="msg" id="sd-msg"></div>
+</div></div>
 
 <script src="/crm.js"></script>
 </body>

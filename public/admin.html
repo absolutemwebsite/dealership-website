@@ -1,235 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Admin — Absolute Motor Cars</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css">
+<link rel="icon" href="/logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  .admin-shell { display: none; min-height: 100vh; }
-  .admin-shell.logged-in { display: flex; }
-  .admin-nav { width: 220px; background: var(--panel); border-right: 1px solid var(--line); padding: 28px 0; display: flex; flex-direction: column; }
-  .admin-nav h3 { padding: 0 24px 20px; font-family: 'Oswald'; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--red); font-weight: 600; }
-  .admin-nav a { display: flex; align-items: center; gap: 8px; padding: 10px 24px; font-family: 'Oswald'; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-left: 2px solid transparent; cursor: pointer; transition: .2s; }
-  .admin-nav a:hover, .admin-nav a.active { color: #fff; border-left-color: var(--red); background: rgba(224,18,12,.06); }
-  .admin-nav .badge-dot { margin-left: auto; background: var(--red); color: #fff; font-size: .6rem; padding: 1px 7px; border-radius: 10px; font-family: 'Inter'; display: none; }
-  .admin-nav .spacer { flex: 1; }
-  .admin-nav .logout-row { padding: 16px 24px; border-top: 1px solid var(--line); font-size: .78rem; color: var(--muted); font-family: 'Inter'; }
-  .admin-main { flex: 1; padding: 36px 40px; overflow-x: auto; }
-  .admin-main h2 { font-family: 'Oswald'; font-size: 1.8rem; font-weight: 600; text-transform: uppercase; color: var(--chrome-1); margin-bottom: 28px; }
-  .admin-main h2 .chrome { font-size: 1.8rem; }
-  .admin-section { display: none; }
-  .admin-section.active { display: block; }
-
-  /* Login */
-  .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-  .login-card { background: var(--panel); border: 1px solid var(--line); padding: 48px 36px; width: 100%; max-width: 400px; }
-  .login-card .brand { justify-content: center; margin-bottom: 28px; }
-  .login-card h2 { font-family: 'Oswald'; font-size: 1.3rem; font-weight: 600; text-transform: uppercase; text-align: center; color: var(--chrome-1); margin-bottom: 24px; }
-  .login-card .field { margin-bottom: 16px; }
-  .login-card .field label { font-family: 'Oswald'; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; }
-  .login-card .field input { width: 100%; padding: 11px 12px; border: 1px solid var(--line); background: var(--black); color: #fff; font-family: 'Inter'; font-size: .92rem; }
-  .login-card .field input:focus { outline: none; border-color: var(--red); }
-  .login-card .alert { padding: 10px 14px; font-size: .82rem; font-family: 'Inter'; margin-bottom: 16px; display: none; }
-  .login-card .alert.show { display: block; }
-  .alert-error { background: rgba(239,68,68,.1); border: 1px solid #ef4444; color: #ef4444; }
-
-  /* Toolbar */
-  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-  .toolbar-left { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .toolbar input, .toolbar select { padding: 10px 14px; border: 1px solid var(--line); background: var(--black); color: #fff; font-family: 'Inter'; font-size: .85rem; }
-  .toolbar input:focus, .toolbar select:focus { outline: none; border-color: var(--red); }
-  .toolbar input { min-width: 240px; }
-
-  /* Table */
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-family: 'Inter'; font-size: .85rem; }
-  th { text-align: left; padding: 12px 14px; font-family: 'Oswald'; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--line); white-space: nowrap; }
-  td { padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
-  tr:hover td { background: rgba(255,255,255,.015); }
-  .cell-actions { display: flex; gap: 6px; }
-  .pill-sm { display: inline-block; padding: 3px 10px; font-family: 'Oswald'; font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
-  .pill-green { background: rgba(34,197,94,.15); color: #22c55e; }
-  .pill-amber { background: rgba(245,158,11,.15); color: #f59e0b; }
-  .pill-gray { background: rgba(138,138,146,.15); color: var(--muted); }
-
-  /* Forms */
-  .edit-panel { background: var(--panel); border: 1px solid var(--line); padding: 32px; margin-bottom: 28px; display: none; }
-  .edit-panel.open { display: block; }
-  .edit-panel h3 { font-family: 'Oswald'; font-size: 1.2rem; font-weight: 600; text-transform: uppercase; color: var(--chrome-1); margin-bottom: 20px; }
-  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
-  .form-grid .field { margin: 0; }
-  .form-grid .field label { display: block; font-family: 'Oswald'; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
-  .form-grid .field input, .form-grid .field select { width: 100%; padding: 9px 10px; border: 1px solid var(--line); background: var(--black); color: #fff; font-family: 'Inter'; font-size: .85rem; }
-  .form-grid .field input:focus, .form-grid .field select:focus { outline: none; border-color: var(--red); }
-  .form-full { margin-top: 14px; }
-  .form-full label { display: block; font-family: 'Oswald'; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
-  .form-full textarea { width: 100%; padding: 9px 10px; border: 1px solid var(--line); background: var(--black); color: #fff; font-family: 'Inter'; font-size: .85rem; resize: vertical; min-height: 80px; }
-  .form-full textarea:focus { outline: none; border-color: var(--red); }
-  .form-actions { display: flex; gap: 10px; margin-top: 18px; }
-
-  /* Image upload */
-  .img-zone { border: 2px dashed var(--line); padding: 30px; text-align: center; cursor: pointer; margin-top: 16px; color: var(--muted); font-family: 'Inter'; font-size: .85rem; transition: border .25s; }
-  .img-zone:hover { border-color: var(--red); }
-  .img-previews { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-  .img-previews .thumb { position: relative; width: 90px; height: 68px; }
-  .img-previews .thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .img-previews .thumb .rm { position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; border-radius: 50%; background: #ef4444; color: #fff; border: none; font-size: .6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-  /* Financing cards */
-  .fin-card { background: var(--panel); border: 1px solid var(--line); padding: 20px 24px; margin-bottom: 12px; }
-  .fin-card .top { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 12px; }
-  .fin-card .top h4 { font-family: 'Oswald'; font-size: 1rem; font-weight: 600; text-transform: uppercase; color: var(--chrome-1); }
-  .fin-card .top .meta { font-size: .82rem; color: var(--muted); font-family: 'Inter'; }
-  .fin-card details { margin-top: 12px; }
-  .fin-card summary { cursor: pointer; font-family: 'Oswald'; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--red); font-weight: 600; }
-  .fin-card .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin-top: 10px; font-size: .8rem; font-family: 'Inter'; color: var(--muted); }
-
-  /* VIN decode */
-  .vin-row { display: flex; gap: 8px; align-items: center; }
-  .vin-row input { flex: 1; }
-  .vin-row button { padding: 8px 14px; font-family: 'Oswald'; font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; background: var(--panel); border: 1px solid var(--line); color: var(--muted); cursor: pointer; transition: .2s; }
-  .vin-row button:hover:not(:disabled) { border-color: var(--red); color: #fff; }
-  .vin-row button:disabled { opacity: .5; cursor: not-allowed; }
-
-  @media(max-width:768px) {
-    .admin-shell.logged-in { flex-direction: column; }
-    .admin-nav { width: 100%; flex-direction: row; overflow-x: auto; padding: 10px 8px; }
-    .admin-nav a { padding: 8px 14px; font-size: .72rem; border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; }
-    .admin-nav a.active { border-bottom-color: var(--red); }
-    .admin-main { padding: 20px 16px; }
-    .form-grid { grid-template-columns: 1fr 1fr; }
-  }
-  @media(max-width:480px) { .form-grid { grid-template-columns: 1fr; } }
+:root{--black:#0a0a0b;--panel:#121214;--panel2:#1a1a1d;--red:#e0120c;--red-deep:#b00d08;
+--text:#e6e6e8;--muted:#8a8a92;--line:rgba(255,255,255,.1);--ok:#22c55e;--warn:#eab308}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--black);color:var(--text);line-height:1.5;font-size:14px}
+h1,h2,h3{font-family:Oswald;text-transform:uppercase;letter-spacing:.02em;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{width:100%;padding:9px 11px;border:1px solid var(--line);background:var(--black);
+color:#fff;font-family:inherit;font-size:13px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red)}
+label{display:block;font-family:Oswald;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+color:var(--muted);margin:10px 0 4px}
+.btn{padding:10px 18px;border:0;font-family:Oswald;font-size:.76rem;letter-spacing:.1em;
+text-transform:uppercase;font-weight:600;transition:.25s}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red-deep)}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.btn-ghost:hover{border-color:var(--red)}
+.btn-sm{padding:6px 12px;font-size:.68rem}
+.wrap{max-width:1200px;margin:0 auto;padding:0 22px}
+/* login */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center}
+#login form{background:var(--panel);border:1px solid var(--line);padding:38px;width:min(380px,92vw)}
+#login img{height:52px;margin:0 auto 22px;display:block}
+/* shell */
+header{border-bottom:1px solid var(--line);background:var(--panel)}
+.topbar{display:flex;align-items:center;gap:20px;height:64px}
+.topbar img{height:36px}
+.topbar .who{margin-left:auto;color:var(--muted);font-size:.8rem}
+.topbar .who b{color:#fff}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);background:var(--panel)}
+.tab{padding:13px 20px;background:none;border:0;color:var(--muted);font-family:Oswald;
+font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;border-bottom:2px solid transparent}
+.tab.on{color:#fff;border-bottom-color:var(--red)}
+.tab .badge{background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:.65rem;margin-left:6px}
+main{padding:26px 0 80px}
+.panel{background:var(--panel);border:1px solid var(--line);padding:20px;margin-bottom:18px}
+.row{display:grid;gap:12px}.r2{grid-template-columns:1fr 1fr}.r3{grid-template-columns:repeat(3,1fr)}
+.r4{grid-template-columns:repeat(4,1fr)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font-family:Oswald;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+tr:hover td{background:rgba(255,255,255,.02)}
+.status{font-family:Oswald;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px}
+.st-new{background:var(--red);color:#fff}.st-available{background:#14532d;color:#86efac}
+.st-reserved{background:#57430a;color:#fde68a}.st-sold{background:#333;color:#aaa}
+.st-in_review{background:#1e3a5f;color:#93c5fd}.st-approved{background:#14532d;color:#86efac}
+.st-archived{background:#333;color:#aaa}.st-done{background:#333;color:#aaa}
+.imgs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.imgs .im{position:relative;width:92px}
+.imgs img{width:92px;height:66px;object-fit:cover;border:1px solid var(--line);display:block}
+.imgs .del{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.75);color:#fff;border:0;
+width:20px;height:20px;font-size:11px}
+.imgs .mv{position:absolute;bottom:2px;background:rgba(0,0,0,.75);color:#fff;border:0;width:20px;height:18px;font-size:10px}
+.imgs .mvl{left:2px}.imgs .mvr{right:2px}
+.vin-row{display:flex;gap:8px;align-items:flex-end}
+.vin-row>div{flex:1}
+.vin-status{font-size:.72rem;margin-top:4px;min-height:16px}
+.vs-ok{color:var(--ok)}.vs-err{color:#ef4444}.vs-busy{color:var(--warn)}
+.doc-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.doc-card{background:var(--panel2);border:1px solid var(--line);padding:22px;cursor:pointer;transition:.25s;text-align:left;color:var(--text)}
+.doc-card:hover{border-color:var(--red)}
+.doc-card h3{margin-bottom:6px}.doc-card p{color:var(--muted);font-size:.82rem}
+.doc-card.on{border-color:var(--red);background:rgba(224,18,12,.06)}
+.hint{color:var(--muted);font-size:.78rem;margin-top:6px}
+.msg{font-size:.82rem;margin-top:10px;min-height:18px}.msg.ok{color:var(--ok)}.msg.err{color:#ef4444}
+.tot{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:.85rem}
+.tot b{font-family:Oswald}
+.tot.grand{background:rgba(224,18,12,.1);padding:9px 8px;font-weight:700}
+@media(max-width:800px){.r2,.r3,.r4{grid-template-columns:1fr}.doc-cards{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
-<div class="login-page" id="login-page">
-  <div class="login-card">
-    <a class="brand"><img src="/logo.png" alt="AMC"></a>
-    <h2>Staff Login</h2>
-    <form id="login-form">
-      <div class="field"><label>Username</label><input type="text" name="username" required autocomplete="username"></div>
-      <div class="field"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div>
-      <div class="alert" id="login-alert"></div>
-      <button type="submit" class="btn btn-solid" style="width:100%;justify-content:center">Sign In</button>
-    </form>
-  </div>
+<div id="login">
+  <form id="login-form">
+    <img src="/logo.png" alt="Absolute Motor Cars">
+    <h2 style="text-align:center;margin-bottom:18px">Staff Login</h2>
+    <label>Username</label><input id="l-user" autocomplete="username" required>
+    <label>Password</label><input id="l-pass" type="password" autocomplete="current-password" required>
+    <button class="btn btn-red" style="width:100%;margin-top:18px">Sign In</button>
+    <div class="msg" id="l-msg"></div>
+  </form>
 </div>
 
-<!-- SHELL -->
-<div class="admin-shell" id="admin-shell">
-  <div class="admin-nav">
-    <h3>Absolute Motor Cars</h3>
-    <a class="active" data-tab="inventory">Inventory</a>
-    <a data-tab="financing">Financing <span class="badge-dot" id="fin-badge">0</span></a>
-    <a data-tab="contacts">Contacts</a>
-    <a data-tab="documents">Documents</a>
-    <div style="border-top:1px solid var(--line);padding-top:8px;margin:6px 0">
-      <a href="/crm">→ CRM</a>
-      <a href="/">→ Public Site</a>
-    </div>
-    <div class="spacer"></div>
-    <div class="logout-row">
-      <div id="nav-user" style="margin-bottom:6px"></div>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:8px;font-size:.7rem" id="logout-btn">Log Out</button>
-    </div>
+<!-- APP -->
+<div id="app" style="display:none">
+  <header><div class="wrap topbar">
+    <img src="/logo.png" alt="">
+    <h2 style="font-size:1rem">Admin Dashboard</h2>
+    <span class="who">Signed in as <b id="who-name"></b> (<span id="who-role"></span>)
+      · <a href="/crm" style="color:var(--red)">CRM</a>
+      · <button class="btn btn-ghost btn-sm" id="logout">Log out</button></span>
+  </div></header>
+  <div class="tabs wrap">
+    <button class="tab on" data-tab="inventory">Inventory</button>
+    <button class="tab" data-tab="financing">Financing <span class="badge" id="fin-badge" style="display:none"></span></button>
+    <button class="tab" data-tab="messages">Messages <span class="badge" id="msg-badge" style="display:none"></span></button>
+    <button class="tab" data-tab="documents">Documents</button>
   </div>
+  <main class="wrap">
 
-  <div class="admin-main">
     <!-- INVENTORY -->
-    <div class="admin-section active" id="sec-inventory">
-      <h2 class="chrome">Inventory</h2>
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <input type="text" id="inv-search" placeholder="Search stock, year, make, model…">
-        </div>
-        <button class="btn btn-solid" id="add-vehicle-btn" style="font-size:.78rem;padding:12px 20px">+ Add Vehicle</button>
-      </div>
-
-      <div class="edit-panel" id="vehicle-editor">
-        <h3 id="editor-title">Add New Vehicle</h3>
+    <section id="tab-inventory">
+      <div class="panel">
+        <h3 id="veh-form-title">Add New Vehicle</h3>
         <form id="veh-form">
-          <div class="form-grid">
-            <div class="field"><label>Stock #</label><input name="stock_number"></div>
-            <div class="field"><label>VIN</label><div class="vin-row"><input name="vin" id="admin-vin" maxlength="17"><button type="button" id="vin-decode-btn" disabled>Decode</button></div><small id="vin-counter" style="color:var(--muted);font-size:.7rem;font-family:'Inter'">0/17</small></div>
-            <div class="field"><label>Year *</label><input type="number" name="year" required></div>
-            <div class="field"><label>Make *</label><input name="make" required></div>
-            <div class="field"><label>Model *</label><input name="model" required></div>
-            <div class="field"><label>Trim</label><input name="trim"></div>
-            <div class="field"><label>Price *</label><input type="number" name="price" required></div>
-            <div class="field"><label>Mileage (km)</label><input type="number" name="mileage"></div>
-            <div class="field"><label>Exterior</label><input name="exterior"></div>
-            <div class="field"><label>Interior</label><input name="interior"></div>
-            <div class="field"><label>Engine</label><input name="engine"></div>
-            <div class="field"><label>Transmission</label><input name="transmission"></div>
-            <div class="field"><label>Drivetrain</label><input name="drivetrain"></div>
-            <div class="field"><label>Fuel</label><input name="fuel"></div>
-            <div class="field"><label>Status</label><select name="status"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option></select></div>
+          <input type="hidden" id="v-id">
+          <div class="row r3">
+            <div><label>Stock #</label><input id="v-stock"></div>
+            <div style="grid-column:span 2">
+              <label>VIN <span id="vin-count" style="color:var(--muted)">0/17</span></label>
+              <div class="vin-row">
+                <div><input id="v-vin" maxlength="17" autocomplete="off"></div>
+                <button type="button" class="btn btn-ghost" id="vin-decode" disabled>Decode</button>
+              </div>
+              <div class="vin-status" id="vin-status"></div>
+            </div>
           </div>
-          <div class="form-full"><label>Description</label><textarea name="description" rows="2"></textarea></div>
-          <input type="hidden" name="id" id="veh-edit-id">
-          <div class="form-actions">
-            <button type="submit" class="btn btn-solid" id="veh-submit">Save Vehicle</button>
-            <button type="button" class="btn btn-ghost" id="veh-cancel">Cancel</button>
+          <div class="row r4">
+            <div><label>Year *</label><input id="v-year" type="number" required></div>
+            <div><label>Make *</label><input id="v-make" required></div>
+            <div><label>Model *</label><input id="v-model" required></div>
+            <div><label>Trim</label><input id="v-trim"></div>
           </div>
+          <div class="row r4">
+            <div><label>Price (CAD) *</label><input id="v-price" type="number" required></div>
+            <div><label>Mileage (km)</label><input id="v-mileage" type="number"></div>
+            <div><label>Exterior</label><input id="v-exterior"></div>
+            <div><label>Interior</label><input id="v-interior"></div>
+          </div>
+          <div class="row r4">
+            <div><label>Engine</label><input id="v-engine"></div>
+            <div><label>Transmission</label><input id="v-transmission"></div>
+            <div><label>Drivetrain</label><input id="v-drivetrain"></div>
+            <div><label>Fuel</label><input id="v-fuel"></div>
+          </div>
+          <div class="row r2">
+            <div><label>Status</label>
+              <select id="v-status"><option value="available">Available</option>
+              <option value="reserved">Reserved</option><option value="sold">Sold</option></select></div>
+            <div><label>Show on website</label>
+              <select id="v-atd"><option value="1">Yes — at dealership</option><option value="0">No — hidden (CRM only)</option></select></div>
+          </div>
+          <label>Description</label><textarea id="v-desc" rows="4"></textarea>
+          <div id="img-zone" style="display:none">
+            <label>Photos (drag order with ‹ ›; first photo is the cover)</label>
+            <input type="file" id="v-imgs" multiple accept="image/*">
+            <div class="imgs" id="img-list"></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-red" type="submit">Save Vehicle</button>
+            <button class="btn btn-ghost" type="button" id="veh-reset">Clear</button>
+          </div>
+          <div class="msg" id="veh-msg"></div>
         </form>
-        <div id="img-section" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--line)">
-          <h4 style="font-family:'Oswald';font-size:.9rem;text-transform:uppercase;letter-spacing:.08em;color:var(--chrome-2);margin-bottom:10px">Images</h4>
-          <div class="img-zone" id="img-zone">Drop images here or click to upload (max 10 MB each)</div>
-          <input type="file" id="img-input" multiple accept="image/*" style="display:none">
-          <div class="img-previews" id="img-previews"></div>
-        </div>
       </div>
-
-      <div class="table-wrap"><table id="inv-table"><thead><tr><th>Stock</th><th>Vehicle</th><th>Price</th><th>Status</th><th>Img</th><th></th></tr></thead><tbody></tbody></table></div>
-    </div>
+      <div class="panel">
+        <h3>All Vehicles</h3>
+        <table><thead><tr><th>Stock</th><th>Vehicle</th><th>Price</th><th>KM</th><th>Status</th><th>Site</th><th></th></tr></thead>
+        <tbody id="veh-rows"></tbody></table>
+      </div>
+    </section>
 
     <!-- FINANCING -->
-    <div class="admin-section" id="sec-financing">
-      <h2 class="chrome">Financing Applications</h2>
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <select id="fin-filter">
-            <option value="all">All</option><option value="new">New</option><option value="in_review">In Review</option><option value="approved">Approved</option><option value="archived">Archived</option>
-          </select>
+    <section id="tab-financing" style="display:none">
+      <div class="panel">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <h3 style="margin-right:auto">Financing Applications</h3>
+          <select id="fin-filter" style="width:auto"><option value="all">All</option><option value="new">New</option>
+          <option value="in_review">In Review</option><option value="approved">Approved</option><option value="archived">Archived</option></select>
         </div>
+        <table><thead><tr><th>Date</th><th>Applicant</th><th>Phone</th><th>Vehicle</th><th>Income/mo</th><th>Status</th><th></th></tr></thead>
+        <tbody id="fin-rows"></tbody></table>
       </div>
-      <div id="fin-list"></div>
-    </div>
+      <div class="panel" id="fin-detail" style="display:none"></div>
+    </section>
 
-    <!-- CONTACTS -->
-    <div class="admin-section" id="sec-contacts">
-      <h2 class="chrome">Contact Messages</h2>
-      <div id="contact-list"></div>
-    </div>
+    <!-- MESSAGES -->
+    <section id="tab-messages" style="display:none">
+      <div class="panel">
+        <h3>Contact Messages</h3>
+        <table><thead><tr><th>Date</th><th>Type</th><th>Name</th><th>Phone</th><th>Details</th><th>Status</th><th></th></tr></thead>
+        <tbody id="msg-rows"></tbody></table>
+      </div>
+    </section>
 
     <!-- DOCUMENTS -->
-    <div class="admin-section" id="sec-documents">
-      <h2 class="chrome">Documents</h2>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:8px">
-        <div class="step" style="cursor:pointer" onclick="if(typeof openStickerModal==='function')openStickerModal()">
-          <div class="num" style="font-size:1.6rem">📋</div>
-          <h3>Window Sticker</h3>
-          <p>Showroom price tag — print-ready, letter size with logo and specs.</p>
+    <section id="tab-documents" style="display:none">
+      <div class="doc-cards">
+        <button class="doc-card on" data-doc="sticker"><h3>Window Sticker</h3><p>Showroom price tag — big price, specs, highlights. Print on letter.</p></button>
+        <button class="doc-card" data-doc="sale"><h3>Sale Documents</h3><p>Bill of Sale and/or Delivery Waiver, filled from a vehicle + purchaser info.</p></button>
+      </div>
+      <div class="panel">
+        <label>Vehicle (auto-fills the form below)</label>
+        <select id="doc-vehicle"><option value="">— choose a vehicle —</option></select>
+
+        <!-- STICKER FORM -->
+        <div id="doc-sticker">
+          <div class="row r3">
+            <div><label>Price</label><input id="s-price" type="number"></div>
+            <div><label>Title Status</label><input id="s-title" value="Clean"></div>
+            <div><label>Financing Available</label><select id="s-fin"><option>Yes</option><option>No</option></select></div>
+          </div>
+          <label>Highlights (one per line)</label><textarea id="s-high" rows="4" placeholder="Sunroof&#10;Backup camera&#10;New tires"></textarea>
+          <button class="btn btn-red" style="margin-top:14px" id="gen-sticker">Print Window Sticker</button>
+          <div class="hint">In the print dialog, enable “Background graphics” for the black header.</div>
         </div>
-        <div class="step" style="cursor:pointer" onclick="if(typeof openBOSModal==='function')openBOSModal()">
-          <div class="num" style="font-size:1.6rem">📄</div>
-          <h3>Bill of Sale & Waiver</h3>
-          <p>Combined BOS with live totals and Delivery Waiver — both print-ready.</p>
+
+        <!-- SALE DOCS FORM -->
+        <div id="doc-sale" style="display:none">
+          <div style="display:flex;gap:20px;margin:8px 0 4px">
+            <label style="display:flex;gap:8px;align-items:center;margin:0"><input type="checkbox" id="d-bos" checked style="width:auto"> Bill of Sale</label>
+            <label style="display:flex;gap:8px;align-items:center;margin:0"><input type="checkbox" id="d-waiver" style="width:auto"> Delivery Waiver</label>
+          </div>
+          <h3 style="margin-top:14px">Purchaser</h3>
+          <div class="row r3">
+            <div><label>Full name</label><input id="p-name"></div>
+            <div><label>Date</label><input id="p-date" type="date"></div>
+            <div><label>Driver's Lic.</label><input id="p-dl"></div>
+          </div>
+          <div class="row r4">
+            <div><label>Address</label><input id="p-addr"></div>
+            <div><label>City</label><input id="p-city"></div>
+            <div><label>Province</label><input id="p-prov" value="BC"></div>
+            <div><label>Postal Code</label><input id="p-postal"></div>
+          </div>
+          <div class="row r4">
+            <div><label>Email</label><input id="p-email"></div>
+            <div><label>Tel (H)</label><input id="p-telh"></div>
+            <div><label>(W)</label><input id="p-telw"></div>
+            <div><label>(C)</label><input id="p-telc"></div>
+          </div>
+          <h3 style="margin-top:14px">Trade-in (leave blank if none)</h3>
+          <div class="row r4">
+            <div><label>Year</label><input id="t-year"></div>
+            <div><label>Make</label><input id="t-make"></div>
+            <div><label>Model</label><input id="t-model"></div>
+            <div><label>Color</label><input id="t-color"></div>
+          </div>
+          <div class="row r4">
+            <div><label>VIN</label><input id="t-vin"></div>
+            <div><label>Odometer</label><input id="t-odo"></div>
+            <div><label>Est. Lien $</label><input id="t-lien" type="number"></div>
+            <div><label>Owing to</label><input id="t-owing"></div>
+          </div>
+          <h3 style="margin-top:14px">Pricing</h3>
+          <div class="row r4">
+            <div><label>Selling Price</label><input id="b-sell" type="number" class="calc"></div>
+            <div><label>Additional Equipment</label><input id="b-addl" type="number" class="calc"></div>
+            <div><label>Trade-in Allowance</label><input id="b-trade" type="number" class="calc"></div>
+            <div><label>Doc/Lien/Transfer Fee</label><input id="b-fee" type="number" value="495" class="calc"></div>
+          </div>
+          <div class="row r4">
+            <div><label>Environmental Tax</label><input id="b-env" type="number" value="0" class="calc"></div>
+            <div><label>Extended Warranty</label><input id="b-warr" type="number" value="0" class="calc"></div>
+            <div><label>Other Charges</label><input id="b-other" type="number" value="0" class="calc"></div>
+            <div><label>Deposit</label><input id="b-dep" type="number" value="0" class="calc"></div>
+          </div>
+          <div class="row r4">
+            <div><label>Payout on Lien</label><input id="b-payout" type="number" value="0" class="calc"></div>
+            <div><label>Down Payments</label><input id="b-down" type="number" value="0" class="calc"></div>
+            <div><label>Amount Financed</label><input id="b-fin" type="number" class="calc"></div>
+            <div><label>Annual Rate %</label><input id="b-rate" type="number" step="0.01"></div>
+          </div>
+          <div style="max-width:420px;margin-top:14px">
+            <div class="tot"><span>TOTAL PRICE</span><b id="o-total">$0.00</b></div>
+            <div class="tot"><span>PRICE DIFFERENCE</span><b id="o-diff">$0.00</b></div>
+            <div class="tot"><span>SUB-TOTAL</span><b id="o-sub">$0.00</b></div>
+            <div class="tot"><span>G.S.T. 5%</span><b id="o-gst">$0.00</b></div>
+            <div class="tot"><span>P.S.T. 7%</span><b id="o-pst">$0.00</b></div>
+            <div class="tot"><span>GST on Warranty 5%</span><b id="o-gstw">$0.00</b></div>
+            <div class="tot"><span>PST on Warranty 7%</span><b id="o-pstw">$0.00</b></div>
+            <div class="tot grand"><span>TOTAL DELIVERY PRICE</span><b id="o-delivery">$0.00</b></div>
+            <div class="tot"><span>TOTAL PAYMENTS</span><b id="o-pay">$0.00</b></div>
+            <div class="tot grand"><span>TOTAL BALANCE DUE</span><b id="o-balance">$0.00</b></div>
+          </div>
+          <h3 style="margin-top:14px">Delivery</h3>
+          <div class="row r3">
+            <div><label>Salesperson</label><input id="d-sales"></div>
+            <div><label>Delivery Required</label><input id="d-req"></div>
+            <div><label>Date Delivered</label><input id="d-date" type="date"></div>
+          </div>
+          <button class="btn btn-red" style="margin-top:16px" id="gen-sale">Generate Bill of Sale</button>
+          <div class="hint" id="popup-hint" style="display:none">Generating both — allow pop-ups if the second document doesn't open.</div>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 </div>
 
-<script src="/docs.js"></script>
 <script src="/admin.js"></script>
 </body>
 </html>
