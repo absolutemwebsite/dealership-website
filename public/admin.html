@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin — Absolute Motor Cars</title>
+<link rel="stylesheet" href="/styles.css">
+<style>
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .form-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .form-inline { grid-template-columns: 1fr; } }
+  .veh-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+</style>
+</head>
+<body style="background:var(--bg)">
+
+<!-- ======================================================================
+     LOGIN VIEW
+     ====================================================================== -->
+<div id="admin-login">
+  <div class="admin-login">
+    <div style="text-align:center;margin-bottom:16px;font-weight:800;font-size:1.1rem;color:var(--accent)">Absolute Motor Cars</div>
+    <h2>Staff Login</h2>
+    <form id="login-form">
+      <div class="form-group"><label>Username</label><input type="text" name="username" required autocomplete="username"></div>
+      <div class="form-group"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div>
+      <div class="alert hidden" id="login-alert"></div>
+      <button type="submit" class="btn btn-primary btn-block">Log In</button>
+    </form>
+  </div>
+</div>
+
+<!-- ======================================================================
+     ADMIN SHELL (hidden until login)
+     ====================================================================== -->
+<div class="admin-shell" id="admin-shell">
+  <div class="admin-sidebar">
+    <h3 style="padding:0 20px 8px;color:var(--accent);font-weight:800;font-size:0.85rem">Absolute Motor Cars</h3>
+    <a class="active" data-tab="inventory">Inventory</a>
+    <a data-tab="financing">Financing <span id="financing-badge" style="display:none;margin-left:auto;background:var(--accent);color:#fff;padding:1px 7px;font-size:0.65rem;border-radius:10px">0</span></a>
+    <a data-tab="contacts">Contacts</a>
+    <a data-tab="documents">Documents</a>
+    <div style="margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--dim)">
+      <div id="sidebar-user"></div>
+      <button class="btn btn-sm" id="logout-btn" style="margin-top:8px;width:100%">Log Out</button>
+    </div>
+  </div>
+
+  <div class="admin-main">
+    <!-- INVENTORY TAB -->
+    <div class="tab-content active" id="tab-inventory">
+      <div class="admin-header">
+        <h1>Inventory</h1>
+        <button class="btn btn-primary btn-sm" id="add-vehicle-btn">+ Add Vehicle</button>
+      </div>
+
+      <!-- Add/Edit form -->
+      <div id="vehicle-form" style="display:none;margin-bottom:24px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:24px">
+        <h3 id="veh-form-title" style="margin-bottom:16px">Add New Vehicle</h3>
+        <form id="veh-form">
+          <div class="veh-form-grid">
+            <div class="form-group"><label>Stock #</label><input type="text" name="stock_number"></div>
+            <div class="form-group"><label>VIN</label><div style="display:flex;gap:6px"><input type="text" name="vin" id="admin-vin" maxlength="17"><button type="button" class="btn btn-sm" id="admin-vin-decode" disabled>Decode</button></div><small id="admin-vin-counter" style="color:var(--dim)">0/17</small></div>
+            <div class="form-group"><label>Year *</label><input type="number" name="year" required></div>
+            <div class="form-group"><label>Make *</label><input type="text" name="make" required></div>
+            <div class="form-group"><label>Model *</label><input type="text" name="model" required></div>
+            <div class="form-group"><label>Trim</label><input type="text" name="trim"></div>
+            <div class="form-group"><label>Price *</label><input type="number" name="price" required></div>
+            <div class="form-group"><label>Mileage (km)</label><input type="number" name="mileage"></div>
+            <div class="form-group"><label>Exterior</label><input type="text" name="exterior"></div>
+            <div class="form-group"><label>Interior</label><input type="text" name="interior"></div>
+            <div class="form-group"><label>Engine</label><input type="text" name="engine"></div>
+            <div class="form-group"><label>Transmission</label><input type="text" name="transmission"></div>
+            <div class="form-group"><label>Drivetrain</label><input type="text" name="drivetrain"></div>
+            <div class="form-group"><label>Fuel</label><input type="text" name="fuel"></div>
+            <div class="form-group"><label>Status</label><select name="status"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option></select></div>
+          </div>
+          <div class="form-group"><label>Description</label><textarea name="description" rows="3"></textarea></div>
+          <input type="hidden" name="id" id="veh-edit-id">
+          <div style="display:flex;gap:10px">
+            <button type="submit" class="btn btn-primary" id="veh-submit-btn">Save Vehicle</button>
+            <button type="button" class="btn" id="veh-cancel-btn">Cancel</button>
+          </div>
+        </form>
+
+        <!-- Image upload (only when editing) -->
+        <div id="veh-images-section" style="display:none;margin-top:24px;padding-top:24px;border-top:1px solid var(--border)">
+          <h4 style="margin-bottom:12px">Images</h4>
+          <div class="images-upload-area" id="images-upload-area">
+            <div>Drop images here or click to upload</div>
+            <div style="font-size:0.75rem;margin-top:4px">Max 10MB each, up to 20 images</div>
+          </div>
+          <input type="file" id="images-input" multiple accept="image/*" style="display:none">
+          <div class="images-preview" id="images-preview"></div>
+          <div id="images-upload-status"></div>
+        </div>
+      </div>
+
+      <!-- Vehicle table -->
+      <table class="admin-table" id="inventory-table">
+        <thead><tr><th>Stock</th><th>Year</th><th>Make</th><th>Model</th><th>Price</th><th>Status</th><th>Images</th><th>Actions</th></tr></thead>
+        <tbody id="inventory-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- FINANCING TAB -->
+    <div class="tab-content" id="tab-financing">
+      <div class="admin-header">
+        <h1>Financing Applications</h1>
+        <select id="financing-filter" style="background:var(--bg2);border:1px solid var(--border);color:var(--ink);padding:6px 10px;border-radius:var(--radius);font-size:0.82rem">
+          <option value="all">All</option><option value="new">New</option><option value="in_review">In Review</option><option value="approved">Approved</option><option value="archived">Archived</option>
+        </select>
+      </div>
+      <div id="financing-list"></div>
+    </div>
+
+    <!-- CONTACTS TAB -->
+    <div class="tab-content" id="tab-contacts">
+      <div class="admin-header"><h1>Contact Messages</h1></div>
+      <div id="contacts-list"></div>
+    </div>
+
+    <!-- DOCUMENTS TAB -->
+    <div class="tab-content" id="tab-documents">
+      <div class="admin-header"><h1>Documents</h1></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+        <div class="form-section" style="cursor:pointer" onclick="openWindowSticker()">
+          <div class="form-section-header">Window Sticker</div>
+          <div class="form-section-body" style="color:var(--dim)">Showroom price tag — print-ready, letter-size</div>
+        </div>
+        <div class="form-section" style="cursor:pointer" onclick="openBOSWaiver()">
+          <div class="form-section-header">Bill of Sale + Waiver</div>
+          <div class="form-section-body" style="color:var(--dim)">Combined BOS and Delivery Waiver documents</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/docs.js"></script>
+<script src="/admin.js"></script>
+</body>
+</html>

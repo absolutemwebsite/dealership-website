@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Absolute Motor Cars — Premium used vehicles in Surrey, BC. Financing available, trade-ins welcome.">
+<title>Absolute Motor Cars | GP Auto Sales Ltd. | Surrey, BC</title>
+<link rel="stylesheet" href="/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%23e0120c'/><text x='16' y='22' text-anchor='middle' font-size='18' font-weight='bold' fill='white'>A</text></svg>">
+</head>
+<body>
+
+<!-- ======================================================================
+     HEADER
+     ====================================================================== -->
+<header class="site-header" id="top">
+  <div class="header-inner">
+    <a href="/" class="header-logo">
+      <img src="/logo.png" alt="Absolute Motor Cars" id="header-logo-img" onerror="this.style.display='none'">
+      <span>Absolute Motor Cars</span>
+    </a>
+    <nav class="header-nav" id="header-nav">
+      <a href="#inventory">Vehicles</a>
+      <a href="#" data-modal="financing">Financing</a>
+      <a href="#" data-modal="contact" data-type="trade-in">Trade-In</a>
+      <a href="#" data-modal="contact" data-type="sourcing">Sourcing</a>
+      <a href="#" data-modal="contact" data-type="general">Contact</a>
+    </nav>
+    <a href="tel:+17788554903" class="header-phone" id="header-phone">778.855.4903</a>
+    <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<!-- ======================================================================
+     HERO
+     ====================================================================== -->
+<section class="hero">
+  <div class="hero-inner">
+    <h1>Drive Away With <span>Confidence</span></h1>
+    <p id="hero-tagline"></p>
+    <p style="font-size:0.85rem; color:var(--dim); margin-top:-8px">Please call for availability</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-num" id="hero-count">—</div><div class="hero-stat-label">Vehicles</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">Open Daily</div><div class="hero-stat-label" id="hero-hours"></div></div>
+      <div class="hero-stat"><div class="hero-stat-num">Financing</div><div class="hero-stat-label">Available</div></div>
+    </div>
+    <a href="#inventory" class="btn btn-primary" style="margin-top:8px">View Inventory</a>
+  </div>
+</section>
+
+<!-- ======================================================================
+     MARQUEE
+     ====================================================================== -->
+<div class="marquee">
+  <div class="marquee-inner">
+    <span>Open Daily</span><span>·</span>
+    <span>Financing Available</span><span>·</span>
+    <span>Trade-Ins Welcome</span><span>·</span>
+    <span>Dealer Registered</span><span>·</span>
+    <span>Open Daily</span><span>·</span>
+    <span>Financing Available</span><span>·</span>
+    <span>Trade-Ins Welcome</span><span>·</span>
+    <span>Dealer Registered</span><span>·</span>
+  </div>
+</div>
+
+<!-- ======================================================================
+     INVENTORY
+     ====================================================================== -->
+<div class="section-header" id="inventory">
+  <h2>Our Inventory <span id="inventory-count"></span></h2>
+  <div class="inventory-filters">
+    <input type="text" class="search-input" id="search-input" placeholder="Search year, make, model...">
+    <button class="filter-chip active" data-filter="all">All</button>
+    <button class="filter-chip" data-filter="available">Available</button>
+    <button class="filter-chip" data-filter="reserved">Reserved</button>
+  </div>
+</div>
+
+<div class="inventory-grid" id="inventory-grid">
+  <div class="loading-state"><div class="spinner"></div><p>Loading inventory...</p></div>
+</div>
+
+<!-- ======================================================================
+     VEHICLE DETAIL MODAL
+     ====================================================================== -->
+<div class="modal-overlay hidden" id="detail-modal">
+  <div class="modal" id="detail-modal-inner">
+    <button class="modal-close" id="detail-close">&times;</button>
+    <div class="gallery" id="detail-gallery"></div>
+    <div class="modal-body" id="detail-body"></div>
+  </div>
+</div>
+
+<!-- ======================================================================
+     CONTACT MODAL
+     ====================================================================== -->
+<div class="modal-overlay hidden" id="contact-modal">
+  <div class="modal form-modal">
+    <div class="form-header">
+      <h3 id="contact-title">Contact Us</h3>
+      <button class="modal-close" id="contact-close" style="position:static">&times;</button>
+    </div>
+    <div class="form-body">
+      <form id="contact-form">
+        <input type="hidden" name="type" id="contact-type" value="general">
+        <div class="form-row">
+          <div class="form-group"><label>Name *</label><input type="text" name="name" required></div>
+          <div class="form-group"><label>Phone *</label><input type="tel" name="phone" required></div>
+        </div>
+        <div class="form-group"><label>Email *</label><input type="email" name="email" required></div>
+        <div class="form-group" id="contact-vehicle-group" style="display:none">
+          <label>Vehicle Details</label><textarea name="vehicle_details" rows="2" placeholder="Year, make, model, or what you're looking for..."></textarea>
+        </div>
+        <div class="form-group"><label>Message</label><textarea name="message" rows="3"></textarea></div>
+        <div class="alert hidden" id="contact-alert"></div>
+        <button type="submit" class="btn btn-primary btn-block" id="contact-submit">Send Message</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================================
+     FINANCING MODAL
+     ====================================================================== -->
+<div class="modal-overlay hidden" id="financing-modal">
+  <div class="modal form-modal">
+    <div class="form-header">
+      <h3>Financing Application</h3>
+      <button class="modal-close" id="financing-close" style="position:static">&times;</button>
+    </div>
+    <div class="form-body">
+      <form id="financing-form">
+        <!-- Section 1: Personal -->
+        <div class="form-section">
+          <div class="form-section-header">Personal Information</div>
+          <div class="form-section-body">
+            <div class="form-row">
+              <div class="form-group"><label>First Name *</label><input type="text" name="first_name" required></div>
+              <div class="form-group"><label>Last Name *</label><input type="text" name="last_name" required></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Email *</label><input type="email" name="email" required></div>
+              <div class="form-group"><label>Phone *</label><input type="tel" name="phone" required></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Date of Birth</label><input type="date" name="date_of_birth"></div>
+              <div class="form-group"><label>Marital Status</label><select name="marital_status"><option value="">—</option><option>Single</option><option>Married</option><option>Common Law</option><option>Divorced</option><option>Widowed</option></select></div>
+            </div>
+            <div class="form-group"><label>SIN (optional)</label><input type="text" name="sin" placeholder="XXX-XXX-XXX"></div>
+          </div>
+        </div>
+
+        <!-- Section 2: Residence -->
+        <div class="form-section">
+          <div class="form-section-header">Residence</div>
+          <div class="form-section-body">
+            <div class="form-group"><label>Street Address *</label><input type="text" name="street_address" required></div>
+            <div class="form-row">
+              <div class="form-group"><label>City *</label><input type="text" name="city" required></div>
+              <div class="form-group"><label>Province *</label><input type="text" name="province" required></div>
+            </div>
+            <div class="form-group"><label>Postal Code *</label><input type="text" name="postal_code" required></div>
+            <div class="form-row">
+              <div class="form-group"><label>Housing Status</label><select name="housing_status"><option value="">—</option><option>Own</option><option>Rent</option><option>Living with Parents</option></select></div>
+              <div class="form-group"><label>Monthly Payment</label><input type="number" name="monthly_housing_payment" placeholder="$"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Years at Address</label><input type="number" name="years_at_address" min="0"></div>
+              <div class="form-group"><label>Months</label><input type="number" name="months_at_address" min="0" max="11"></div>
+            </div>
+            <p style="font-size:0.78rem;color:var(--dim);margin-bottom:12px">If less than 2 years at current address, provide previous:</p>
+            <div class="form-group"><label>Previous Address</label><input type="text" name="prev_street_address"></div>
+            <div class="form-row">
+              <div class="form-group"><label>Prev. City</label><input type="text" name="prev_city"></div>
+              <div class="form-group"><label>Prev. Province</label><input type="text" name="prev_province"></div>
+            </div>
+            <div class="form-group"><label>Prev. Postal Code</label><input type="text" name="prev_postal_code"></div>
+          </div>
+        </div>
+
+        <!-- Section 3: Employment -->
+        <div class="form-section">
+          <div class="form-section-header">Employment</div>
+          <div class="form-section-body">
+            <div class="form-group"><label>Employment Status</label><select name="employment_status"><option value="">—</option><option>Full-time</option><option>Part-time</option><option>Self-employed</option><option>Retired</option><option>Unemployed</option></select></div>
+            <div class="form-row">
+              <div class="form-group"><label>Employer Name</label><input type="text" name="employer_name"></div>
+              <div class="form-group"><label>Job Title</label><input type="text" name="job_title"></div>
+            </div>
+            <div class="form-group"><label>Employer Phone</label><input type="tel" name="employer_phone"></div>
+            <div class="form-row">
+              <div class="form-group"><label>Years Employed</label><input type="number" name="years_employed" min="0"></div>
+              <div class="form-group"><label>Months</label><input type="number" name="months_employed" min="0" max="11"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Gross Monthly Income</label><input type="number" name="gross_monthly_income" placeholder="$"></div>
+              <div class="form-group"><label>Other Income</label><input type="number" name="other_income" placeholder="$"></div>
+            </div>
+            <div class="form-group"><label>Other Income Source</label><input type="text" name="other_income_source"></div>
+          </div>
+        </div>
+
+        <!-- Section 4: Vehicle of Interest -->
+        <div class="form-section">
+          <div class="form-section-header">Vehicle of Interest</div>
+          <div class="form-section-body">
+            <div class="form-group"><label>Vehicle</label><input type="text" name="vehicle_of_interest" id="financing-vehicle" placeholder="e.g. 2020 Toyota Camry SE"></div>
+            <input type="hidden" name="vehicle_id" id="financing-vehicle-id">
+            <div class="form-row">
+              <div class="form-group"><label>Down Payment</label><input type="number" name="down_payment" placeholder="$"></div>
+            </div>
+            <div class="checkbox-group">
+              <input type="checkbox" name="has_trade_in" value="1" id="financing-has-trade">
+              <label for="financing-has-trade">I have a trade-in</label>
+            </div>
+            <div class="form-group" id="financing-trade-details" style="display:none">
+              <label>Trade-in Details</label><textarea name="trade_in_details" rows="2" placeholder="Year, make, model, condition..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 5: Co-Applicant -->
+        <div class="form-section">
+          <div class="form-section-header">Co-Applicant</div>
+          <div class="form-section-body">
+            <div class="checkbox-group">
+              <input type="checkbox" name="has_co_applicant" value="1" id="financing-has-co">
+              <label for="financing-has-co">Add Co-Applicant</label>
+            </div>
+            <div id="financing-co-fields" style="display:none">
+              <div class="form-row">
+                <div class="form-group"><label>Name</label><input type="text" name="co_applicant_name"></div>
+                <div class="form-group"><label>Relationship</label><input type="text" name="co_applicant_relationship"></div>
+              </div>
+              <div class="form-group"><label>Phone</label><input type="tel" name="co_applicant_phone"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 6: Notes + Consent -->
+        <div class="form-section">
+          <div class="form-section-header">Notes &amp; Consent</div>
+          <div class="form-section-body">
+            <div class="form-group"><label>Notes</label><textarea name="notes" rows="2"></textarea></div>
+            <div class="checkbox-group">
+              <input type="checkbox" name="consent_credit_check" value="1" required id="financing-consent">
+              <label for="financing-consent">I consent to a credit check for the purpose of this financing application *</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert hidden" id="financing-alert"></div>
+        <button type="submit" class="btn btn-primary btn-block">Submit Application</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================================
+     WHATSAPP FLOAT
+     ====================================================================== -->
+<a href="#" class="whatsapp-float" id="whatsapp-btn" target="_blank" rel="noopener" title="Chat on WhatsApp">💬</a>
+
+<!-- ======================================================================
+     FOOTER
+     ====================================================================== -->
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h4>Absolute Motor Cars</h4>
+      <p id="footer-address"></p>
+      <p id="footer-phone"></p>
+      <a href="mailto:" id="footer-email"></a>
+    </div>
+    <div class="footer-col">
+      <h4>Sales</h4>
+      <a href="#inventory">Vehicle Sales</a>
+      <a href="#" data-modal="contact" data-type="trade-in">Trade-In Appraisal</a>
+      <a href="#" data-modal="financing">Financing</a>
+      <a href="#" data-modal="contact" data-type="sourcing">Vehicle Sourcing</a>
+    </div>
+    <div class="footer-col">
+      <h4>Hours</h4>
+      <p id="footer-hours"></p>
+    </div>
+    <div class="footer-col">
+      <h4>Connect</h4>
+      <a href="#" id="footer-instagram"></a>
+      <a href="https://gpautobc.com" target="_blank" rel="noopener">GPAUTOBC.COM</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; <span id="footer-year"></span> GP Auto Sales Ltd. DBA Absolute Motor Cars. Dealer Reg #30721. All rights reserved. | <a href="/admin">Staff Login</a></p>
+  </div>
+</footer>
+
+<!-- ======================================================================
+     SCRIPTS
+     ====================================================================== -->
+<script src="/app.js"></script>
+</body>
+</html>
