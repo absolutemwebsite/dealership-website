@@ -131,10 +131,13 @@
     <!-- PRODUCTION -->
     <div class="crm-tab active" id="tab-production">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-        <input type="text" id="prod-search" placeholder="Search stock, year, make, model…" style="padding:10px 14px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem;min-width:240px">
-        <select id="prod-loc-filter" style="padding:10px 14px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem">
-          <option value="all">All Locations</option>
-        </select>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="prod-search" placeholder="Search stock, year, make, model…" style="padding:10px 14px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem;min-width:240px">
+          <select id="prod-loc-filter" style="padding:10px 14px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem">
+            <option value="all">All Locations</option>
+          </select>
+        </div>
+        <button class="btn btn-solid" style="font-size:.78rem;padding:10px 20px" id="crm-add-vehicle">+ Add Vehicle</button>
       </div>
       <div id="prod-list"></div>
     </div>

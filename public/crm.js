@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('crm-backup-btn').addEventListener('click', showBackup);
   document.getElementById('ledger-export').addEventListener('click', exportLedger);
   document.getElementById('sold-export').addEventListener('click', exportSoldCSV);
+  document.getElementById('crm-add-vehicle').addEventListener('click', showAddVehicle);
 });
 
 // ============================================================================
@@ -183,6 +184,76 @@ function renderProd() {
 
 function setLoc(id, loc) { const v = CRM_VEHICLES.find(x => (x.vehicle_id||x.id)===id); if(v){v.location=loc;renderProd();saveData();} }
 function toggleF(id, field, val) { const v = CRM_VEHICLES.find(x => (x.vehicle_id||x.id)===id); if(v){v[field]=val?0:1;renderProd();saveData();} }
+
+// ============================================================================
+//  ADD VEHICLE (CRM → creates in SQLite + GitHub)
+// ============================================================================
+function showAddVehicle() {
+  document.getElementById('crm-modals').innerHTML = `
+    <div class="modal-overlay" id="addveh-modal" style="display:flex">
+      <div class="modal" style="max-width:600px">
+        <div class="modal-body" style="padding:28px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+            <h3 style="font-family:'Oswald';font-size:1.1rem;text-transform:uppercase;color:var(--chrome-1)">Add Vehicle to CRM</h3>
+            <button class="modal-close" style="position:static" onclick="closeModal('addveh-modal')">&times;</button>
+          </div>
+          <p style="font-family:'Inter';font-size:.8rem;color:var(--muted);margin-bottom:16px">Vehicle starts hidden from website. Set location to <strong>Dealership</strong> when ready to list.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Stock #</label><input id="av-stock" style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">VIN</label><input id="av-vin" maxlength="17" style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Year *</label><input type="number" id="av-year" required style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Make *</label><input id="av-make" required style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Model *</label><input id="av-model" required style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Trim</label><input id="av-trim" style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Price *</label><input type="number" id="av-price" required style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Mileage (km)</label><input type="number" id="av-mileage" style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Exterior</label><input id="av-ext" style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Interior</label><input id="av-int" style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Engine</label><input id="av-engine" style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Transmission</label><input id="av-trans" style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+            <div class="field"><label style="font-family:'Oswald';font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Drivetrain</label><input id="av-drive" style="width:100%;padding:9px;border:1px solid var(--line);background:var(--black);color:#fff;font-family:'Inter';font-size:.85rem"></div>
+          </div>
+          <button class="btn btn-solid" style="margin-top:16px;width:100%;justify-content:center" onclick="saveNewVehicle()">Create Vehicle</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('addveh-modal').addEventListener('click', function(e){ if(e.target===this)closeModal('addveh-modal'); });
+}
+
+async function saveNewVehicle() {
+  const g = id => document.getElementById(id)?.value||'';
+  const data = {
+    stock_number: g('av-stock'), vin: g('av-vin'),
+    year: parseInt(g('av-year'))||0, make: g('av-make'), model: g('av-model'), trim: g('av-trim'),
+    price: parseInt(g('av-price'))||0, mileage: parseInt(g('av-mileage'))||0,
+    exterior: g('av-ext'), interior: g('av-int'),
+    engine: g('av-engine'), transmission: g('av-trans'), drivetrain: g('av-drive'),
+    status: 'available', at_dealership: 0,  // hidden from website initially
+  };
+  if (!data.year || !data.make || !data.model || !data.price) { alert('Year, make, model, and price are required.'); return; }
+
+  try {
+    const r = await api('/api/vehicles', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+    if (!r.ok) throw new Error((await r.json()).error||'Failed');
+    const v = await r.json();
+    // Add to CRM local state + GitHub
+    CRM_VEHICLES.push({
+      vehicle_id: v.id, stock_number: v.stock_number,
+      year: v.year, make: v.make, model: v.model, trim: v.trim,
+      price: v.price, mileage: v.mileage, vin: v.vin,
+      exterior: v.exterior, interior: v.interior,
+      engine: v.engine, transmission: v.transmission, drivetrain: v.drivetrain,
+      images: v.images||[], created_at: v.created_at,
+      purchase_price:0,icbc:0,detailing:0,transport:0,boost:0,tire:0,repair:0,windshield:0,afc_extra:0,misc_cost:0,sales_cost:0,gst_paid:0,
+      location: 'Dealership', registration_done:0, inspection_done:0,
+    });
+    closeModal('addveh-modal');
+    updateKPIs(); populateLocs(); renderProd();
+    saveData();
+  } catch(e) { alert('Error: '+e.message); }
+}
 
 // ============================================================================
 //  EDIT COSTS
