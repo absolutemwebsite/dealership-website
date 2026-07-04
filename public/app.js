@@ -99,8 +99,8 @@
     if (filterSort === 'price-asc') list.sort((a,b) => (a.price||0) - (b.price||0));
     else if (filterSort === 'price-desc') list.sort((a,b) => (b.price||0) - (a.price||0));
     else if (filterSort === 'mileage-asc') list.sort((a,b) => (a.mileage||0) - (b.mileage||0));
-    else if (filterSort === 'year-desc') list.sort((a,b) => (b.year||0) - (a.year||0));
-    else list.sort((a,b) => (b.year||0) - (b.created_at||0));
+    else if (filterSort === 'year-asc') list.sort((a,b) => (a.year||0) - (b.year||0));
+    else list.sort((a,b) => (b.year||0) - (a.year||0));
     return list;
   }
 
