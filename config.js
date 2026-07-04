@@ -10,7 +10,7 @@ const DEALERSHIP = {
   legalName:   'GP Auto Sales Ltd.',                 // used on legal documents
   brandName:   'Absolute Motor Cars',                // used for branding / headers
   dbaLine:     'GP AUTO SALES LTD  DBA 1 ABSOLUTE MOTOR CARS', // exact BOS header line
-  tagline:     '',                                   // ⚠ FILL IN (e.g. "Where customers become family") — optional
+  tagline:     'Quality Pre-Owned Vehicles in Surrey, BC',
 
   // --- Contact / location (from BOS template — confirmed) ---
   address:     '16099 Fraser Hwy',
@@ -20,14 +20,14 @@ const DEALERSHIP = {
   postalCode:  'V4N 0G2',
   phone:       '778.855.4903',
   phoneE164:   '17788554903',                        // for tel: and WhatsApp links — ⚠ CONFIRM country code
-  email:       '',                                   // ⚠ FILL IN — where financing/contact notifications go
+  email:       'absolutemotorcars@gmail.com',
   websites:    ['GPAUTOBC.COM', 'GPAUTOBC.CA'],
 
   // --- Social ---
-  instagram:   '',                                   // ⚠ FILL IN (handle, e.g. @absolutemotorcars)
+  instagram:   '@absolutemotorcars',
 
   // --- Hours ---
-  hours:       '',                                   // ⚠ FILL IN (e.g. "Open Daily 10am–7pm")
+  hours:       'Open Daily 9:30am–6pm',
 
   // --- Registration / tax numbers (from BOS template — confirmed) ---
   dealerReg:   '30721',
