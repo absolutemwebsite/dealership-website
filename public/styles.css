@@ -237,10 +237,6 @@ footer{border-top:1px solid var(--line);padding:60px 0 36px}
 @media(max-width:560px){
   .grid{grid-template-columns:1fr}.two{grid-template-columns:1fr}.foot-top{grid-template-columns:1fr}
   .split>div{padding:44px 28px}.band{padding:72px 0}
-  .hero{background-image:none !important;background:
-    radial-gradient(120% 90% at 75% 0%,rgba(224,18,12,.12),transparent 55%),
-    radial-gradient(90% 70% at 20% 100%,rgba(184,184,188,.05),transparent 60%),
-    var(--black) !important}
   .hero h1{font-size:clamp(2.2rem,10vw,3rem)}
 }
 @media(prefers-reduced-motion:reduce){

@@ -78,12 +78,13 @@
    if (!hero) return;
    const tmp = new Image();
    tmp.onload = () => {
+     const isMobile = window.innerWidth < 560;
      hero.style.backgroundImage = `
        linear-gradient(rgba(10,10,11,.72),rgba(10,10,11,.72)),
        url('${img}')
      `;
      hero.style.backgroundSize = 'cover';
-     hero.style.backgroundPosition = 'center 30%';
+     hero.style.backgroundPosition = isMobile ? 'center center' : 'center 30%';
    };
    tmp.src = img;
  }
