@@ -64,12 +64,18 @@
  }
 
  function setHeroBg(){
-   if (!VEHICLES.length) return;
-   const img = VEHICLES[0].images && VEHICLES[0].images[0];
-   if (!img) return;
+   // Pick the nicest car from inventory (Bentley, Mercedes CLS, BMW X5, etc.)
+   const niceMakes = ['Bentley','Mercedes-Benz','BMW'];
+   let best = null;
+   for (const m of niceMakes) {
+     best = VEHICLES.find(v => v.make === m && v.images && v.images.length);
+     if (best) break;
+   }
+   if (!best) best = VEHICLES.find(v => v.images && v.images.length);
+   if (!best) return;
+   const img = best.images[0];
    const hero = $('.hero');
    if (!hero) return;
-   // Preload then set as background
    const tmp = new Image();
    tmp.onload = () => {
      hero.style.backgroundImage = `
