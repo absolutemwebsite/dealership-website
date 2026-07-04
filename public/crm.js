@@ -4,7 +4,7 @@ const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelect
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt$=n=>'$'+(Number(n)||0).toLocaleString('en-CA');
 let TOKEN=localStorage.getItem('amc_token')||'', USER=null, ROWS=[], SOLD=[], locFilter='All';
-const LOCS=['Auction','Mechanic Shop','Dealership','Dealership - Absolute','Dealership - DND','Detail Shop','Body Shop','With Customer',"Owner's Home"];
+const LOCS=['Auction','Mechanic Shop','Dealership - Absolute','Dealership - DND','Detail Shop','Body Shop','With Customer',"Owner's Home"];
 const COSTS=[['purchase_price','Purchase Price'],['icbc','ICBC'],['detailing','Detailing'],['transport','Transport'],
  ['boost','Boost'],['tire','Tire'],['repair','Repair'],['windshield','Windshield'],['afc_extra','AFC Extra'],
  ['misc_cost','Misc Cost'],['sales_cost','Sales Cost']];
@@ -79,7 +79,7 @@ function render(){
 
   // location chips
   const counts={All:ROWS.length};LOCS.forEach(l=>counts[l]=ROWS.filter(v=>v.location===l).length);
-  $('#loc-chips').innerHTML=['All',...(USER.role==='owner'?LOCS:['Dealership'])].map(l=>
+  $('#loc-chips').innerHTML=['All',...(USER.role==='owner'?LOCS:['Dealership - Absolute','Dealership - DND'])].map(l=>
     `<button class="chip ${locFilter===l?'on':''}" data-loc="${l}">${l} (${counts[l]||0})</button>`).join(' ');
   $$('#loc-chips .chip').forEach(c=>c.addEventListener('click',()=>{locFilter=c.dataset.loc;render();}));
 
@@ -181,7 +181,7 @@ function renderSold(){
       <td>${fmt$(sum('reserve_non_gst'))}</td><td>${fmt$(sum('gst_collected'))}</td><td>${fmt$(sum('pst_collected'))}</td>
       <td></td><td>${fmt$(list.reduce((t,s)=>t+profit(s),0))}</td><td></td></tr></tfoot>`;
   $$('#sold-table [data-return]').forEach(b=>b.addEventListener('click',async()=>{
-    if(!confirm('Return this vehicle to production at the Dealership and delete the sold record?'))return;
+    if(!confirm('Return this vehicle to production and delete the sold record?'))return;
     await api('/api/crm/sold/'+b.dataset.return,{method:'DELETE'});refresh();
   }));
 }

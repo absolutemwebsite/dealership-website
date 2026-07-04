@@ -292,7 +292,7 @@ function requireOwner(req, res, next) {
 }
 
 const uid = () => crypto.randomUUID();
-const isDealership = loc => ['Dealership','Dealership - Absolute','Dealership - DND'].includes(loc);
+const isDealership = loc => ['Dealership - Absolute','Dealership - DND'].includes(loc);
 const now = () => Date.now();
 
 // ---------------------------------------------------------------------------
@@ -579,7 +579,7 @@ app.get('/api/crm/vehicles', requireAuth, (req, res) => {
 
 app.put('/api/crm/vehicles/:id/location', requireAuth, requireOwner, (req, res) => {
   const loc = req.body && req.body.location;
-  const LOCS = ['Auction','Mechanic Shop','Dealership','Dealership - Absolute','Dealership - DND','Detail Shop','Body Shop','With Customer',"Owner's Home"];
+  const LOCS = ['Auction','Mechanic Shop','Dealership - Absolute','Dealership - DND','Detail Shop','Body Shop','With Customer',"Owner's Home"];
   if (!LOCS.includes(loc)) return res.status(400).json({ error: 'Invalid location' });
   getCosts(req.params.id);
   db.prepare(`UPDATE vehicle_costs SET location=?, updated_at=? WHERE vehicle_id=?`).run(loc, now(), req.params.id);
