@@ -17,32 +17,16 @@ const { DEALERSHIP } = require('./config');
 
 // ---------------------------------------------------------------------------
 //  Paths & storage (Railway persistent volume mounts at /app/storage)
+//  NOTE: On Railway, do NOT set DATA_DIR or UPLOADS_DIR env vars — let the
+//  code use the defaults (./storage/data, ./storage/uploads) so the repo's
+//  seed data is used directly. If you need persistent storage for admin
+//  uploads, add a Railway volume and the seed startup below will populate it.
 // ---------------------------------------------------------------------------
 const DATA_DIR    = process.env.DATA_DIR    || path.join(__dirname, 'storage', 'data');
 const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(__dirname, 'storage', 'uploads');
 for (const d of [DATA_DIR, UPLOADS_DIR]) fs.mkdirSync(d, { recursive: true });
 
 const DB_PATH = path.join(DATA_DIR, 'dealership.db');
-
-// ---------------------------------------------------------------------------
-//  Seed recovery: if the configured paths are empty (e.g. Railway volume at
-//  /app/storage shadows the repo's data), copy the seeded DB from ./seed/.
-//  The seed DB is tracked in git (~254 KB).
-// ---------------------------------------------------------------------------
-function seedIfEmpty() {
-  if (countVehicles(DB_PATH) <= 0) {
-    const seedDb = path.join(__dirname, 'seed', 'dealership.db');
-    if (fs.existsSync(seedDb)) {
-      try {
-        const src = new Database(seedDb, { readonly: true });
-        src.pragma('wal_checkpoint(TRUNCATE)');
-        src.close();
-        fs.copyFileSync(seedDb, DB_PATH);
-        console.log(`[seed] database adopted from seed/`);
-      } catch (e) { console.warn('[seed] DB copy failed:', e.message); }
-    }
-  }
-}
 
 // ---------------------------------------------------------------------------
 //  Auto-recovery: if configured DB is empty/missing, adopt the richest DB
@@ -93,7 +77,6 @@ function globSafe(dir) {
   catch { return []; }
 }
 autoRecoverDatabase();
-seedIfEmpty();
 
 // ---------------------------------------------------------------------------
 //  Database + schema
@@ -251,6 +234,20 @@ function seedUsers() {
   ensure('STAFF_USERNAME', 'STAFF_PASSWORD', 'staff', 'staff');
 }
 seedUsers();
+
+// ---------------------------------------------------------------------------
+//  Seed: if the database is empty, populate from seed/vehicles.json
+//  (small, ~500KB, tracked in git). Images are downloaded from the original
+//  CDN URLs in the exact order they appeared on the website.
+// ---------------------------------------------------------------------------
+if (countVehicles(DB_PATH) <= 0) {
+  try {
+    const { seedDatabase } = require('./seed/seed');
+    seedDatabase(db, UPLOADS_DIR).catch(e => console.warn('[seed] async error:', e.message));
+  } catch (e) {
+    console.warn('[seed] failed to load seed module:', e.message);
+  }
+}
 
 // ---------------------------------------------------------------------------
 //  App + middleware
