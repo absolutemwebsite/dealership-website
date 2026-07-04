@@ -59,6 +59,10 @@ tr:hover td{background:rgba(255,255,255,.02)}
 width:20px;height:20px;font-size:11px}
 .imgs .mv{position:absolute;bottom:2px;background:rgba(0,0,0,.75);color:#fff;border:0;width:20px;height:18px;font-size:10px}
 .imgs .mvl{left:2px}.imgs .mvr{right:2px}
+.drop-zone{border:2px dashed var(--line);border-radius:6px;padding:20px 16px;margin-top:8px;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;transition:border-color .25s}
+.drop-zone:hover{border-color:var(--red)}
+.drop-zone input[type=file]{position:absolute;opacity:0;width:1px;height:1px;overflow:hidden}
 .vin-row{display:flex;gap:8px;align-items:flex-end}
 .vin-row>div{flex:1}
 .vin-status{font-size:.72rem;margin-top:4px;min-height:16px}
@@ -151,8 +155,12 @@ width:20px;height:20px;font-size:11px}
           </div>
           <label>Description</label><textarea id="v-desc" rows="4"></textarea>
           <div id="img-zone" style="display:none">
-            <label>Photos (drag order with ‹ ›; first photo is the cover)</label>
-            <input type="file" id="v-imgs" multiple accept="image/*">
+            <label>Upload Photos (drag order with ‹ ›; first photo is the cover)</label>
+            <div class="drop-zone" id="drop-zone">
+              <input type="file" id="v-imgs" multiple accept="image/*">
+              <label for="v-imgs" class="btn btn-ghost btn-sm" style="cursor:pointer">Choose Files</label>
+              <span style="color:var(--muted);font-size:.72rem;margin-left:8px">or drag &amp; drop images here</span>
+            </div>
             <div class="imgs" id="img-list"></div>
           </div>
           <div style="display:flex;gap:10px;margin-top:16px">
@@ -254,6 +262,7 @@ width:20px;height:20px;font-size:11px}
           <h3 style="margin-top:14px">Pricing</h3>
           <div class="row r4">
             <div><label>Selling Price</label><input id="b-sell" type="number" class="calc"></div>
+            <div><label>Odometer (km)</label><input id="b-odo" type="number" class="calc"></div>
             <div><label>Additional Equipment</label><input id="b-addl" type="number" class="calc"></div>
             <div><label>Trade-in Allowance</label><input id="b-trade" type="number" class="calc"></div>
             <div><label>Doc/Lien/Transfer Fee</label><input id="b-fee" type="number" value="495" class="calc"></div>

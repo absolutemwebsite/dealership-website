@@ -68,6 +68,11 @@
       <button class="chip" data-status="reserved">Reserved</button>
       <div class="inv-search"><input id="inv-search" type="search" placeholder="Search year, make, model…" aria-label="Search inventory"></div>
     </div>
+    <div class="inv-filters reveal">
+      <select id="filter-make" aria-label="Filter by make"><option value="">All Makes</option></select>
+      <select id="filter-price" aria-label="Filter by price"><option value="">All Prices</option><option value="0-15000">Under $15k</option><option value="15000-25000">$15k – $25k</option><option value="25000-40000">$25k – $40k</option><option value="40000-60000">$40k – $60k</option><option value="60000-999999">Over $60k</option><option value="100000-999999">Over $100k</option></select>
+      <select id="filter-sort" aria-label="Sort by"><option value="newest">Newest First</option><option value="price-asc">Price Low–High</option><option value="price-desc">Price High–Low</option><option value="mileage-asc">Mileage Low–High</option><option value="year-desc">Year Low–High</option></select>
+    </div>
     <div class="grid" id="inv-grid"></div>
   </div>
 </section>
@@ -174,7 +179,7 @@
     </div>
     <div class="foot-bottom">
       <span>© 2026 GP Auto Sales Ltd. DBA Absolute Motor Cars. All rights reserved.</span>
-      <span>16099 Fraser Hwy, Surrey, BC · <a href="tel:7788554903">778.855.4903</a></span>
+      <span>16099 Fraser Hwy, Surrey, BC · <a href="tel:7788554903">778.855.4903</a> · <a href="/admin" style="color:var(--muted);font-size:.78rem;text-decoration:underline;text-decoration-style:dotted">Staff</a></span>
     </div>
   </div>
 </footer>

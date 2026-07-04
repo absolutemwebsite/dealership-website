@@ -12,6 +12,9 @@
   let VEHICLES = [];
   let filterStatus = 'all';
   let searchTerm = '';
+  let filterMake = '';
+  let filterPrice = '';
+  let filterSort = 'newest';
 
   /* ---------- boot ---------- */
   document.addEventListener('DOMContentLoaded', async () => {
@@ -59,14 +62,25 @@
   }
 
   function visibleVehicles(){
-    return VEHICLES.filter(v => {
+    let list = VEHICLES.filter(v => {
       if (filterStatus !== 'all' && v.status !== filterStatus) return false;
       if (searchTerm) {
         const hay = `${v.year} ${v.make} ${v.model} ${v.trim||''}`.toLowerCase();
         if (!hay.includes(searchTerm)) return false;
       }
+      if (filterMake && v.make.toLowerCase() !== filterMake) return false;
+      if (filterPrice) {
+        const [lo, hi] = filterPrice.split('-').map(Number);
+        if (v.price == null || v.price < lo || v.price > hi) return false;
+      }
       return true;
     });
+    if (filterSort === 'price-asc') list.sort((a,b) => (a.price||0) - (b.price||0));
+    else if (filterSort === 'price-desc') list.sort((a,b) => (b.price||0) - (a.price||0));
+    else if (filterSort === 'mileage-asc') list.sort((a,b) => (a.mileage||0) - (b.mileage||0));
+    else if (filterSort === 'year-desc') list.sort((a,b) => (b.year||0) - (a.year||0));
+    else list.sort((a,b) => (b.year||0) - (b.created_at||0));
+    return list;
   }
 
   function renderGrid(){
@@ -116,6 +130,14 @@
     }));
     const si = $('#inv-search');
     si.addEventListener('input', () => { searchTerm = si.value.trim().toLowerCase(); renderGrid(); });
+    // Populate make filter from unique makes
+    const fm = $('#filter-make');
+    const makes = [...new Set(VEHICLES.map(v => v.make).filter(Boolean))].sort();
+    fm.innerHTML = '<option value="">All Makes</option>' + makes.map(m =>
+      `<option value="${m.toLowerCase()}">${esc(m)}</option>`).join('');
+    fm.addEventListener('change', () => { filterMake = fm.value; renderGrid(); });
+    $('#filter-price').addEventListener('change', function(){ filterPrice = this.value; renderGrid(); });
+    $('#filter-sort').addEventListener('change', function(){ filterSort = this.value; renderGrid(); });
   }
 
   /* ---------- vehicle modal ---------- */

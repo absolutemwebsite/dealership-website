@@ -250,7 +250,9 @@ function fillDocPicker(){
 }
 $('#doc-vehicle').addEventListener('change',()=>{
   const v=VEHICLES.find(x=>x.id===$('#doc-vehicle').value); if(!v) return;
-  $('#s-price').value=v.price; $('#b-sell').value=v.price; calc();
+  $('#s-price').value=v.price; $('#b-sell').value=v.price;
+  if(v.mileage!=null) $('#b-odo').value=v.mileage;
+  calc();
 });
 const selVehicle=()=>VEHICLES.find(x=>x.id===$('#doc-vehicle').value)||null;
 
@@ -354,28 +356,28 @@ $('#gen-sale').addEventListener('click', async ()=>{
 async function bosHTML(v){
   const logo=await logo64(), o=calc(), g=id=>esc($(id).value);
   const L=(w='100%')=>`<span style="display:inline-block;border-bottom:1px solid #000;min-width:${w}">&nbsp;</span>`;
-  const cell=(lbl,val,flex=1)=>`<td style="border:.75px solid #000;padding:2px 4px;vertical-align:top;width:${flex}%">
-    <div style="font-size:6pt;color:#444;text-transform:uppercase;letter-spacing:.05em">${lbl}</div>
-    <div style="font-size:8pt;min-height:11px;font-weight:600">${val||'&nbsp;'}</div></td>`;
+  const cell=(lbl,val,flex=1)=>`<td style="border:.75px solid #000;padding:1px 3px;vertical-align:top;width:${flex}%">
+    <div style="font-size:5.5pt;color:#444;text-transform:uppercase;letter-spacing:.04em">${lbl}</div>
+    <div style="font-size:7.2pt;min-height:10px;font-weight:600">${val||'&nbsp;'}</div></td>`;
   const money=(lbl,val,hl)=>`<div style="display:flex;justify-content:space-between;border-bottom:.75px solid #000;
-    padding:2px 5px;font-size:7.6pt;${hl?'background:#000;color:#fff;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact':''}">
+    padding:2px 4px;font-size:7pt;${hl?'background:#000;color:#fff;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact':''}">
     <span>${lbl}</span><span>${val}</span></div>`;
   return `<!doctype html><html><head><title>Bill of Sale</title><style>
-  @page{size:letter;margin:.35in}*{box-sizing:border-box;margin:0}
-  body{font-family:Arial,Helvetica,sans-serif;color:#000;font-size:7.2pt;line-height:1.28}
+  @page{size:letter;margin:.3in}*{box-sizing:border-box;margin:0}
+  body{font-family:Arial,Helvetica,sans-serif;color:#000;font-size:6.6pt;line-height:1.22}
   table{border-collapse:collapse;width:100%}
-  .sec{background:#000;color:#fff;text-align:center;font-weight:700;letter-spacing:.08em;padding:2px;font-size:7.5pt;
+  .sec{background:#000;color:#fff;text-align:center;font-weight:700;letter-spacing:.08em;padding:2px;font-size:6.8pt;
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
-  ol{padding-left:13px}li{margin:1px 0}
+  ol{padding-left:12px}li{margin:0}
   .pg2{page-break-before:always}
-  .cond p{margin:2.5px 0;text-align:justify;font-size:6.6pt}
-  .warr{border:1.2px solid #000;padding:4px;margin-top:4px}
-  .asis{font-weight:700;background:#fff5f0;border:1.2px solid #c00;padding:3px;margin:3px 0;font-size:7.6pt;
+  .cond p{margin:1.8px 0;text-align:justify;font-size:6pt}
+  .warr{border:1.2px solid #000;padding:3px;margin-top:3px}
+  .asis{font-weight:700;background:#fff5f0;border:1.2px solid #c00;padding:2px;margin:2px 0;font-size:7pt;
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
   </style></head><body>
 
-  <div style="text-align:center;font-style:italic;font-size:7.5pt">(THIS IS A LEGAL AND BINDING CONTRACT)</div>
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px solid #000;padding:4px 0;margin-bottom:4px">
+  <div style="text-align:center;font-style:italic;font-size:7pt">(THIS IS A LEGAL AND BINDING CONTRACT)</div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px solid #000;padding:3px 0;margin-bottom:3px">
     <div style="display:flex;gap:8px;align-items:center">
       <img src="${logo}" style="height:44px">
       <div><b>To:</b> <b style="font-size:9pt">GP AUTO SALES LTD&nbsp;&nbsp;DBA 1 ABSOLUTE MOTOR CARS</b><br>
@@ -391,19 +393,19 @@ async function bosHTML(v){
   <tr>${cell('Address',g('#p-addr'),34)}${cell('City',g('#p-city'),16)}${cell('Province',g('#p-prov'),8)}
     ${cell('Postal Code',g('#p-postal'),20)}${cell('Tel(H) / (W) / (C)',[g('#p-telh'),g('#p-telw'),g('#p-telc')].filter(Boolean).join(' / '),22)}</tr></table>
 
-  <div style="font-weight:700;margin:3px 0">Hereby offer to purchase from you one Used Motor Vehicle described and identified as follows:</div>
+  <div style="font-weight:700;margin:2px 0">Hereby offer to purchase from you one Used Motor Vehicle described and identified as follows:</div>
   <table><tr>${cell('Year',v.year,8)}${cell('Make',esc(v.make),14)}${cell('Series & Model',esc(v.model+' '+(v.trim||'')),26)}
     ${cell('Colour',esc(v.exterior||''),12)}${cell('Stock#',esc(v.stock_number||''),10)}
-    ${cell('V.I.N.(Serial No.)',esc(v.vin||''),20)}${cell('No. of Cyl.','',5)}${cell('Odometer — Km. ☒ / Mil. ☐ (CHECK ONE)',v.mileage!=null?Number(v.mileage).toLocaleString():'',15)}</tr></table>
-  <div style="font-size:6.6pt;margin:2px 0">(hereinafter called the Motor Vehicle) and the optional equipment and accessories, if any, set out herein at the price stated and under the terms and conditions set forth below and on the 2nd page hereof.</div>
+    ${cell('V.I.N.(Serial No.)',esc(v.vin||''),20)}${cell('No. of Cyl.','',5)}${cell('Odometer — Km. ☒ / Mil. ☐ (CHECK ONE)',g('#b-odo')||(v.mileage!=null?Number(v.mileage).toLocaleString():''),15)}</tr></table>
+  <div style="font-size:6pt;margin:1.5px 0">(hereinafter called the Motor Vehicle) and the optional equipment and accessories, if any, set out herein at the price stated and under the terms and conditions set forth below and on the 2nd page hereof.</div>
 
   <div class="sec">DESCRIPTION OF TRADE-IN — Disclosures - Authorization to Transfer Title</div>
   <table><tr>${cell('Year',g('#t-year'),8)}${cell('Make',g('#t-make'),14)}${cell('Model',g('#t-model'),18)}
     ${cell('Color',g('#t-color'),12)}${cell('V.I.N.',g('#t-vin'),22)}
     ${cell('Estimated Amount of Lien $',g('#t-lien'),12)}${cell('Owing to / Name / Address',g('#t-owing'),14)}
     ${cell('Odometer — Km. ☒ / Mil. ☐',g('#t-odo'),12)}</tr></table>
-  <div style="font-size:6.6pt;margin-top:2px">The owner of the trade-in vehicle (described herein as the "Purchaser") declares the following to be true to the best of his/her knowledge and belief.</div>
-  <ol style="font-size:6.6pt">
+  <div style="font-size:6pt;margin-top:1.5px">The owner of the trade-in vehicle (described herein as the "Purchaser") declares the following to be true to the best of his/her knowledge and belief.</div>
+  <ol style="font-size:6pt">
     <li>(a) The trade-in vehicle has never been used as a taxi, police vehicle, emergency vehicle, leased vehicle, rental vehicle, or used in organized racing, except as disclosed herein: ${L('120px')}<br>
     (b) The trade-in vehicle has never sustained damage requiring repairs costing more than $2000.00 except as disclosed herein: ${L('120px')}<br>
     (c) The trade-in vehicle has never been registered in any jurisdiction other than British Columbia, except as disclosed herein: ${L('120px')}</li>
@@ -477,8 +479,8 @@ async function bosHTML(v){
 
   <!-- PAGE 2: CONDITIONS (verbatim) -->
   <div class="pg2">
-  <div style="text-align:center;font-weight:700;font-size:10pt;letter-spacing:.2em;margin:4px 0">C O N D I T I O N S</div>
-  <div style="text-align:center;font-size:6.8pt;margin-bottom:4px">The conditions set out herein are included in the Agreement of Sale or Purchase set out on Page 1 of this Agreement</div>
+  <div style="text-align:center;font-weight:700;font-size:9pt;letter-spacing:.15em;margin:3px 0">C O N D I T I O N S</div>
+  <div style="text-align:center;font-size:6.2pt;margin-bottom:3px">The conditions set out herein are included in the Agreement of Sale or Purchase set out on Page 1 of this Agreement</div>
   <div class="cond">
   <p>1.  If the purchaser of the motor vehicle is to be financed by or through the Vendor, it is agreed that a Conditional Sales Agreement or Chattel Mortgage will be entered into by the Purchaser with such lending company or person as the Vendor shall advise is acceptable, and the Purchaser agrees to execute the said Conditional Sales Agreement or Chattel Mortgage or Forms required by the said company or the person drawn for the balance of the purchase price plus financing charges and interest in accord with the terms of payment indicated on Page 1 of this Agreement hereof, and in the event of a conflict between the terms or conditions of the Conditional Sale or Chattel Mortgage and the terms or conditions of this Agreement, the terms and conditions of the Chattel Mortgage or Conditional Sale shall prevail and apply.</p>
   <p>2.  The right and title to the motor vehicle ordered herein and hereinafter referred to as "the motor vehicle" shall remain in the Vendor until the unpaid cash balance stated on Page 1 of this Agreement hereof and all other sums including interest, owing by the Purchaser to the Vendor according to the terms, conditions and warranties herein, are fully paid to the Vendor.</p>
@@ -504,12 +506,12 @@ async function bosHTML(v){
   <p>19.  Time is of the essence of this Agreement.</p>
   <p>20.  Wherever the singular or masculine are used throughout this Agreement, the same shall be construed as being the plural or feminine or neuter where the context so requires.</p>
   </div>
-  <div style="border:.75px solid #000;padding:3px;margin-top:4px"><b style="font-size:6.8pt">Additional Comments:</b><div style="min-height:26px"></div></div>
-  <div style="font-size:7pt;margin-top:5px">SIGNATURE OF PURCHASER__________________________________________________________ &nbsp;&nbsp;Date_______________________</div>
-  <div style="font-size:7pt;margin-top:2px">SIGNATURE OF CO-PURCHASER_______________________________________________________</div>
-  <p style="font-size:6.2pt;border-top:1px solid #000;margin-top:5px;padding-top:3px;text-align:justify">The personal information received from individuals relating to this form is collected in accordance with the Privacy Policy Act.  The collection of data is necessary to provide services directly requested by you and is also necessary for the purchase(s), sale(s), financing, leasing, or service(s) of the vehicle(s).  Please contact the organization's Privacy Officer if you have any questions.  If, in the future, you wish to have the information you have provided withdrawn please notify us in writing.</p>
+  <div style="border:.75px solid #000;padding:2px;margin-top:3px"><b style="font-size:6.2pt">Additional Comments:</b><div style="min-height:22px"></div></div>
+  <div style="font-size:6.5pt;margin-top:3px">SIGNATURE OF PURCHASER__________________________________________________________ &nbsp;&nbsp;Date_______________________</div>
+  <div style="font-size:6.5pt;margin-top:1.5px">SIGNATURE OF CO-PURCHASER_______________________________________________________</div>
+  <p style="font-size:5.8pt;border-top:1px solid #000;margin-top:3px;padding-top:2px;text-align:justify">The personal information received from individuals relating to this form is collected in accordance with the Privacy Policy Act.  The collection of data is necessary to provide services directly requested by you and is also necessary for the purchase(s), sale(s), financing, leasing, or service(s) of the vehicle(s).  Please contact the organization's Privacy Officer if you have any questions.  If, in the future, you wish to have the information you have provided withdrawn please notify us in writing.</p>
 
-  <div style="border:1.2px solid #000;padding:5px;margin-top:6px">
+  <div style="border:1.2px solid #000;padding:4px;margin-top:4px">
     <div style="text-align:center;font-weight:700;font-size:9pt;margin-bottom:3px">Warranty, Repair, and Parts Agreement</div>
     <div style="font-size:7pt">Between GP AUTO SALES LTD. and <b>${g('#p-name')||'____________________'}</b></div>
     <table style="margin:3px 0"><tr>${cell('Year',v.year,8)}${cell('Make',esc(v.make),14)}${cell('Series & Model',esc(v.model+' '+(v.trim||'')),24)}
