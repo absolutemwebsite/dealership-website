@@ -104,7 +104,7 @@ async function seedDatabase(db, uploadsDir) {
       const vin = v.vin || '';
       const existing = vin ? getVehicleId.get(vin) : null;
       const vid = existing ? existing.id : uid();
-      const mileageKm = v.mileage ? Math.round(v.mileage * 1.609) : null;
+      const mileageKm = v.mileage || null;
       // Stock number = last 6 of VIN (uppercase)
       const stockNumber = (v.stock_number || (vin.length >= 6 ? vin.slice(-6).toUpperCase() : '')) || null;
       const prefix = vid.split('-')[0] || vid.slice(0, 8);

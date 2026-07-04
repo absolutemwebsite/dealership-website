@@ -52,14 +52,35 @@
 
   /* ---------- inventory ---------- */
   async function loadInventory(){
-    const grid = $('#inv-grid');
-    grid.innerHTML = '<div class="inv-empty"><h3>Loading inventory…</h3></div>';
-    try {
-      const r = await fetch('/api/vehicles');
-      VEHICLES = r.ok ? await r.json() : [];
-    } catch { VEHICLES = []; }
-    renderGrid();
-  }
+   const grid = $('#inv-grid');
+   grid.innerHTML = '<div class="inv-empty"><h3>Loading inventory…</h3></div>';
+   try {
+     const r = await fetch('/api/vehicles');
+     VEHICLES = r.ok ? await r.json() : [];
+   } catch { VEHICLES = []; }
+   renderGrid();
+   // Set hero background from first vehicle image
+   setHeroBg();
+ }
+
+ function setHeroBg(){
+   if (!VEHICLES.length) return;
+   const img = VEHICLES[0].images && VEHICLES[0].images[0];
+   if (!img) return;
+   const hero = $('.hero');
+   if (!hero) return;
+   // Preload then set as background
+   const tmp = new Image();
+   tmp.onload = () => {
+     hero.style.backgroundImage = `
+       linear-gradient(rgba(10,10,11,.72),rgba(10,10,11,.72)),
+       url('${img}')
+     `;
+     hero.style.backgroundSize = 'cover';
+     hero.style.backgroundPosition = 'center 30%';
+   };
+   tmp.src = img;
+ }
 
   function visibleVehicles(){
     let list = VEHICLES.filter(v => {
