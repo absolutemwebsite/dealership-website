@@ -10,7 +10,7 @@ const DEALERSHIP = {
   legalName:   'GP Auto Sales Ltd.',                 // used on legal documents
   brandName:   'Absolute Motor Cars',                // used for branding / headers
   dbaLine:     'GP AUTO SALES LTD  DBA 1 ABSOLUTE MOTOR CARS', // exact BOS header line
-  tagline:     'Quality Pre-Owned Vehicles in Surrey, BC',
+  tagline:     'Where customers become family',
 
   // --- Contact / location (from BOS template — confirmed) ---
   address:     '16099 Fraser Hwy',
