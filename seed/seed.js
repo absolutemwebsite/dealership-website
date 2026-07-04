@@ -1,34 +1,44 @@
 /* ==========================================================================
- *  Seed script — populates an empty database with all 51 vehicles.
- *  Images are downloaded from the original CDN URLs in website order.
- *  Run by server.js on startup when the vehicles table is empty.
+ *  Seed script — populates the database with all 51 vehicles and downloads
+ *  their images from the original CDN in the exact website order.
+ *
+ *  Each image gets a UNIQUE filename: <vehicleIdPrefix>-<sortOrder>.jpg
+ *  so vehicles never share or overwrite each other's images.
+ *
+ *  Idempotent: skips vehicles that already have images downloaded.
  * ========================================================================== */
 
 const crypto = require('crypto');
 const path   = require('path');
 const fs     = require('fs');
 const https  = require('https');
+const http   = require('http');
 
 const SEED_DATA = require('./vehicles.json');
-
 const uid = () => crypto.randomUUID();
 
 /**
- * Download an image from a thumbor CDN URL to the uploads directory.
- * Returns the filename on success, null on failure.
+ * Download a single image, returning the filename on success.
+ * Filename format: <vehiclePrefix>-<sortIndex>.jpg  (unique per vehicle)
  */
-function downloadImage(url, destDir, index) {
+function downloadImage(url, destDir, prefix, index) {
   return new Promise((resolve) => {
-    // Build a clean filename: sort-order based filename for ordering
-    const ext = '.jpg';
-    const fname = `${String(index).padStart(4, '0')}${ext}`;
+    const fname = `${prefix}-${String(index).padStart(4, '0')}.jpg`;
     const dest = path.join(destDir, fname);
 
     if (fs.existsSync(dest) && fs.statSync(dest).size > 5000) {
-      return resolve(fname); // already downloaded
+      return resolve(fname); // already present
     }
 
-    https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://absolutemotorcars.ca/' } }, (res) => {
+    const client = url.startsWith('https') ? https : http;
+    client.get(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://absolutemotorcars.ca/' },
+      timeout: 20000,
+    }, (res) => {
+      if (res.statusCode === 301 || res.statusCode === 302) {
+        // Follow redirect
+        return downloadImage(res.headers.location, destDir, prefix, index).then(resolve);
+      }
       if (res.statusCode !== 200) {
         res.resume();
         return resolve(null);
@@ -44,57 +54,67 @@ function downloadImage(url, destDir, index) {
           resolve(null);
         }
       });
-    }).on('error', () => resolve(null));
+    }).on('error', () => resolve(null))
+      .on('timeout', function () { this.destroy(); resolve(null); });
   });
 }
 
 /**
- * Seed the database with all 51 vehicles and their images.
- * Called by server.js on startup when vehicles table is empty.
+ * Seed the database and download images into the uploads directory.
+ *
+ * @param {Database} db       — better-sqlite3 instance (already open, schema created)
+ * @param {string} uploadsDir — absolute path to the uploads directory
  */
 async function seedDatabase(db, uploadsDir) {
   const now = Date.now();
-  const insertVeh = db.prepare(`INSERT INTO vehicles 
+  const bcrypt = require('bcryptjs');
+
+  // -----------------------------------------------------------------------
+  //  Preparations
+  // -----------------------------------------------------------------------
+  fs.mkdirSync(uploadsDir, { recursive: true });
+
+  const insertVeh = db.prepare(`INSERT OR REPLACE INTO vehicles 
     (id, stock_number, year, make, model, trim, price, mileage, exterior, interior, 
      engine, transmission, drivetrain, fuel, vin, status, description, at_dealership, 
      created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
-  const insertImg = db.prepare(`INSERT INTO vehicle_images 
+  const insertImg = db.prepare(`INSERT OR REPLACE INTO vehicle_images 
     (id, vehicle_id, filename, sort_order, created_at) VALUES (?, ?, ?, ?, ?)`);
 
-  const insertCosts = db.prepare(`INSERT INTO vehicle_costs 
+  const insertCosts = db.prepare(`INSERT OR REPLACE INTO vehicle_costs 
     (vehicle_id, location, updated_at) VALUES (?, 'Dealership', ?)`);
 
   const upsertUser = db.prepare(`INSERT OR IGNORE INTO users 
     (id, username, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?)`);
 
+  // Map vin → uuid so we reuse the same vehicle ID across re-seeds
+  const getVehicleId = db.prepare(`SELECT id FROM vehicles WHERE vin = ?`);
+
   console.log(`[seed] Populating database with ${SEED_DATA.length} vehicles...`);
 
-  const tx = db.transaction(() => {
+  // -----------------------------------------------------------------------
+  //  Phase 1 — Insert vehicle records (transaction)
+  // -----------------------------------------------------------------------
+  const vehicleIds = []; // [ { id, vin, prefix, images[] }, ... ]
+
+  const insertTx = db.transaction(() => {
     for (const v of SEED_DATA) {
-      const vid = uid();
-      
-      // Convert miles to km
+      const vin = v.vin || '';
+      const existing = vin ? getVehicleId.get(vin) : null;
+      const vid = existing ? existing.id : uid();
+
       const mileageKm = v.mileage ? Math.round(v.mileage * 1.609) : null;
+      const prefix = vid.split('-')[0] || vid.slice(0, 8);
 
       insertVeh.run(
-        vid,
-        v.stock_number || null,
-        v.year,
-        v.make,
-        v.model,
-        v.trim || null,
-        v.price,
-        mileageKm,
-        v.exterior || null,
-        v.interior || null,
-        v.engine || null,
-        v.transmission || null,
-        v.drivetrain || null,
-        v.fuel || null,
-        v.vin || null,
-        v.status || 'available',
+        vid, v.stock_number || null, v.year, v.make, v.model,
+        v.trim || null, v.price, mileageKm,
+        v.exterior || null, v.interior || null,
+        v.engine || null, v.transmission || null,
+        v.drivetrain || null, v.fuel || null,
+        vin || null, v.status || 'available',
         v.description || null,
         v.at_dealership != null ? v.at_dealership : 1,
         now, now
@@ -102,22 +122,25 @@ async function seedDatabase(db, uploadsDir) {
 
       insertCosts.run(vid, now);
 
-      // Insert image records with correct sort order
+      // Insert image records with UNIQUE filenames
       const urls = Array.isArray(v.images) ? v.images : [];
       urls.forEach((url, i) => {
-        insertImg.run(uid(), vid, String(i).padStart(4, '0') + '.jpg', i, now);
+        const fname = `${prefix}-${String(i).padStart(4, '0')}.jpg`;
+        insertImg.run(uid(), vid, fname, i, now);
       });
+
+      vehicleIds.push({ id: vid, vin, prefix, urls });
     }
   });
 
-  tx();
-  console.log(`[seed] ${SEED_DATA.length} vehicles inserted.`);
+  insertTx();
 
-  // Create default admin users (so env vars don't need to be set for migration)
-  // These are overwritten server.js seedUsers() if env vars are present
-  const bcrypt = require('bcryptjs');
+  // Count what we have
+  const dbCount = db.prepare('SELECT COUNT(*) c FROM vehicles').get().c;
+  console.log(`[seed] ${dbCount} vehicles in database.`);
+
+  // Create admin users
   const pwHash = bcrypt.hashSync('admin123', 12);
-  
   const userTx = db.transaction(() => {
     upsertUser.run(uid(), 'owner', pwHash, 'owner', now);
     upsertUser.run(uid(), 'staff', pwHash, 'staff', now);
@@ -125,31 +148,32 @@ async function seedDatabase(db, uploadsDir) {
   userTx();
   console.log('[seed] Admin users created (owner/admin123, staff/admin123).');
 
-  // Download images from CDN (async, with concurrency)
+  // -----------------------------------------------------------------------
+  //  Phase 2 — Download images (one vehicle at a time to name correctly)
+  //  Each vehicle's images are downloaded sequentially (not parallel) to
+  //  avoid overwhelming the CDN and to ensure correct ordering.
+  // -----------------------------------------------------------------------
   console.log('[seed] Downloading vehicle images from CDN...');
-  fs.mkdirSync(uploadsDir, { recursive: true });
 
-  let totalDownloaded = 0;
-  let totalFailed = 0;
+  let totalOk = 0;
+  let totalFail = 0;
 
-  for (let vi = 0; vi < SEED_DATA.length; vi++) {
-    const v = SEED_DATA[vi];
-    if (!Array.isArray(v.images) || v.images.length === 0) continue;
+  for (let vi = 0; vi < vehicleIds.length; vi++) {
+    const { prefix, urls } = vehicleIds[vi];
+    if (!urls.length) continue;
 
-    const results = await Promise.allSettled(
-      v.images.map((url, i) => downloadImage(url, uploadsDir, i))
-    );
+    for (let i = 0; i < urls.length; i++) {
+      const result = await downloadImage(urls[i], uploadsDir, prefix, i);
+      if (result) totalOk++;
+      else totalFail++;
+    }
 
-    const ok = results.filter(r => r.status === 'fulfilled' && r.value).length;
-    totalDownloaded += ok;
-    totalFailed += v.images.length - ok;
-
-    if (vi % 10 === 0 || vi === SEED_DATA.length - 1) {
-      console.log(`[seed]  ${vi + 1}/${SEED_DATA.length} vehicles processed (${totalDownloaded} images OK, ${totalFailed} failed)`);
+    if (vi % 10 === 0 || vi === vehicleIds.length - 1) {
+      console.log(`[seed]  ${vi + 1}/${vehicleIds.length} vehicles (${totalOk} OK, ${totalFail} failed)`);
     }
   }
 
-  console.log(`[seed] Image download complete: ${totalDownloaded} OK, ${totalFailed} failed`);
+  console.log(`[seed] Image download complete: ${totalOk} OK, ${totalFail} failed`);
 }
 
 module.exports = { seedDatabase };
