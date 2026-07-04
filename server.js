@@ -292,6 +292,7 @@ function requireOwner(req, res, next) {
 }
 
 const uid = () => crypto.randomUUID();
+const isDealership = loc => ['Dealership','Dealership - Absolute','Dealership - DND'].includes(loc);
 const now = () => Date.now();
 
 // ---------------------------------------------------------------------------
@@ -566,7 +567,7 @@ app.get('/api/crm/vehicles', requireAuth, (req, res) => {
   let vehicles = db.prepare(`SELECT * FROM vehicles WHERE status != 'sold' ORDER BY created_at DESC`).all();
   const rows = vehicles.map(v => {
     const c = getCosts(v.id);
-    if (!isOwner && c.location !== 'Dealership') return null;          // staff: dealership only
+    if (!isOwner && !isDealership(c.location)) return null;          // staff: dealership only
     const base = { ...attachImages(v),
       location: c.location, registration_done: c.registration_done,
       inspection_done: c.inspection_done, inspection_data: c.inspection_data };
@@ -578,13 +579,13 @@ app.get('/api/crm/vehicles', requireAuth, (req, res) => {
 
 app.put('/api/crm/vehicles/:id/location', requireAuth, requireOwner, (req, res) => {
   const loc = req.body && req.body.location;
-  const LOCS = ['Auction','Mechanic Shop','Dealership','Detail Shop','Body Shop','With Customer',"Owner's Home"];
+  const LOCS = ['Auction','Mechanic Shop','Dealership','Dealership - Absolute','Dealership - DND','Detail Shop','Body Shop','With Customer',"Owner's Home"];
   if (!LOCS.includes(loc)) return res.status(400).json({ error: 'Invalid location' });
   getCosts(req.params.id);
   db.prepare(`UPDATE vehicle_costs SET location=?, updated_at=? WHERE vehicle_id=?`).run(loc, now(), req.params.id);
   // at_dealership sync: Dealership => visible on website; anything else hidden
   db.prepare(`UPDATE vehicles SET at_dealership=?, updated_at=? WHERE id=?`)
-    .run(loc === 'Dealership' ? 1 : 0, now(), req.params.id);
+    .run(isDealership(loc) ? 1 : 0, now(), req.params.id);
   res.json({ ok: true });
 });
 

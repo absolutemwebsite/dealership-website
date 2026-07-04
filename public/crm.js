@@ -4,7 +4,7 @@ const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelect
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt$=n=>'$'+(Number(n)||0).toLocaleString('en-CA');
 let TOKEN=localStorage.getItem('amc_token')||'', USER=null, ROWS=[], SOLD=[], locFilter='All';
-const LOCS=['Auction','Mechanic Shop','Dealership','Detail Shop','Body Shop','With Customer',"Owner's Home"];
+const LOCS=['Auction','Mechanic Shop','Dealership','Dealership - Absolute','Dealership - DND','Detail Shop','Body Shop','With Customer',"Owner's Home"];
 const COSTS=[['purchase_price','Purchase Price'],['icbc','ICBC'],['detailing','Detailing'],['transport','Transport'],
  ['boost','Boost'],['tire','Tire'],['repair','Repair'],['windshield','Windshield'],['afc_extra','AFC Extra'],
  ['misc_cost','Misc Cost'],['sales_cost','Sales Cost']];
