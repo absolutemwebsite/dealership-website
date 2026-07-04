@@ -127,7 +127,7 @@
       <button class="card" data-id="${v.id}">
         <div class="card-img">
           ${v.images && v.images.length
-            ? `<img src="${v.images[0]}" alt="${esc(v.year+' '+v.make+' '+v.model)}" loading="lazy">`
+            ? `<img src="${v.thumbnails && v.thumbnails.length ? v.thumbnails[0] : v.images[0]}" alt="${esc(v.year+' '+v.make+' '+v.model)}" loading="lazy">`
             : `<span class="noimg">Photos coming soon</span>`}
           <span class="tag ${v.status}">${v.status}</span>
         </div>

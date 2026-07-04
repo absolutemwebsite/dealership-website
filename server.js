@@ -323,7 +323,8 @@ function attachImages(vehicle) {
   const imgs = db.prepare(
     `SELECT filename FROM vehicle_images WHERE vehicle_id = ? ORDER BY sort_order ASC, created_at ASC`
   ).all(vehicle.id).map(r => `/uploads/${r.filename}`);
-  return { ...vehicle, images: imgs };
+  const thumbs = imgs.map(u => u.replace('/uploads/', '/api/thumbnail/'));
+  return { ...vehicle, images: imgs, thumbnails: thumbs };
 }
 
 // Public list — only cars at the dealership and not sold
@@ -444,6 +445,21 @@ app.put('/api/vehicles/:id/images/reorder', requireAuth, (req, res) => {
   const stmt = db.prepare(`UPDATE vehicle_images SET sort_order=? WHERE vehicle_id=? AND filename=?`);
   order.forEach((fname, i) => stmt.run(i, req.params.id, fname.replace('/uploads/', '')));
   res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+//  Thumbnail — on-the-fly 400×300 JPEG (≈15 KB vs 120 KB for full image)
+//  Dramatically speeds up grid view. Full images still used in modal.
+// ---------------------------------------------------------------------------
+app.get('/api/thumbnail/:filename', async (req, res) => {
+  const fname = req.params.filename.replace(/[^a-zA-Z0-9_.-]/g, '');
+  const src = path.join(UPLOADS_DIR, fname);
+  if (!fs.existsSync(src)) return res.status(404).end();
+  try {
+    const buf = await sharp(src).rotate().resize(400, 300, { fit: 'cover', position: 'centre' })
+      .jpeg({ quality: 70 }).toBuffer();
+    res.type('image/jpeg').send(buf);
+  } catch { res.status(500).end(); }
 });
 
 // ---------------------------------------------------------------------------
