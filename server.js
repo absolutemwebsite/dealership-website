@@ -247,7 +247,7 @@ const usesOldStyleNames = db.prepare(
   `SELECT COUNT(*) c FROM vehicle_images WHERE filename GLOB '[0-9][0-9][0-9][0-9].jpg'`
 ).get().c > 0;
 
-if (existingCount !== 51 || usesOldStyleNames || true) {
+if (existingCount !== 51 || usesOldStyleNames) {
   if (existingCount > 0) {
     console.log(`[seed] detected ${existingCount} vehicles, old-names=${usesOldStyleNames}; re-seeding...`);
   }
