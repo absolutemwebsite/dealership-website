@@ -96,7 +96,7 @@ async function seedDatabase(db, uploadsDir) {
 
   // -----------------------------------------------------------------------
   //  Phase 1 — Insert vehicle records (transaction)
-  // -----------------------------------------------------------------------
+  // Insert vehicle records with VIN-based stock numbers
   const vehicleIds = []; // [ { id, vin, prefix, images[] }, ... ]
 
   const insertTx = db.transaction(() => {
@@ -104,12 +104,13 @@ async function seedDatabase(db, uploadsDir) {
       const vin = v.vin || '';
       const existing = vin ? getVehicleId.get(vin) : null;
       const vid = existing ? existing.id : uid();
-
       const mileageKm = v.mileage ? Math.round(v.mileage * 1.609) : null;
+      // Stock number = last 6 of VIN (uppercase)
+      const stockNumber = (v.stock_number || (vin.length >= 6 ? vin.slice(-6).toUpperCase() : '')) || null;
       const prefix = vid.split('-')[0] || vid.slice(0, 8);
 
       insertVeh.run(
-        vid, v.stock_number || null, v.year, v.make, v.model,
+        vid, stockNumber, v.year, v.make, v.model,
         v.trim || null, v.price, mileageKm,
         v.exterior || null, v.interior || null,
         v.engine || null, v.transmission || null,

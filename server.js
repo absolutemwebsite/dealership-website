@@ -355,6 +355,10 @@ app.post('/api/vehicles', requireAuth, (req, res) => {
   if (b.year == null || !b.make || !b.model || b.price == null)
     return res.status(400).json({ error: 'year, make, model, and price are required' });
   const id = uid(), t = now();
+  // Auto-generate stock number from last 6 of VIN if not provided
+  if (!b.stock_number && b.vin && String(b.vin).length >= 6) {
+    b.stock_number = String(b.vin).slice(-6).toUpperCase();
+  }
   const vals = VEHICLE_FIELDS.map(f => b[f] !== undefined ? b[f] : null);
   db.prepare(`INSERT INTO vehicles
     (id, ${VEHICLE_FIELDS.join(',')}, created_at, updated_at)
