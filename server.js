@@ -236,11 +236,19 @@ function seedUsers() {
 seedUsers();
 
 // ---------------------------------------------------------------------------
-//  Seed: if the database is empty, populate from seed/vehicles.json
-//  (small, ~500KB, tracked in git). Images are downloaded from the original
-//  CDN URLs in the exact order they appeared on the website.
+//  Seed: if the database is empty or has fewer than 51 vehicles (stale),
+//  repopulate from seed/vehicles.json (tracked in git, ~500KB).
+//  Images are downloaded from the original CDN URLs in website order.
 // ---------------------------------------------------------------------------
-if (countVehicles(DB_PATH) <= 0) {
+const existingCount = countVehicles(DB_PATH);
+if (existingCount < 51) {
+  if (existingCount > 0) {
+    // Stale data — clear and re-seed
+    db.prepare('DELETE FROM vehicle_images').run();
+    db.prepare('DELETE FROM vehicle_costs').run();
+    db.prepare('DELETE FROM vehicles').run();
+    console.log(`[seed] cleared ${existingCount} stale vehicles`);
+  }
   try {
     const { seedDatabase } = require('./seed/seed');
     seedDatabase(db, UPLOADS_DIR).catch(e => console.warn('[seed] async error:', e.message));
