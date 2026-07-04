@@ -236,16 +236,20 @@ function seedUsers() {
 seedUsers();
 
 // ---------------------------------------------------------------------------
-//  Seed: if the database has fewer than 51 vehicles (empty or stale),
-//  repopulate from seed/vehicles.json (tracked in git, ~500KB).
+//  Seed: if the database has fewer than 51 vehicles, or images use the old
+//  shared filenames (0000.jpg, etc.), repopulate from seed/vehicles.json.
 //  Images are downloaded from the original CDN URLs in website order with
 //  unique per-vehicle filenames so they never overwrite each other.
 //  Idempotent — safe to run multiple times.
 // ---------------------------------------------------------------------------
 const existingCount = countVehicles(DB_PATH);
-if (existingCount < 51) {
+const usesOldStyleNames = db.prepare(
+  `SELECT COUNT(*) c FROM vehicle_images WHERE filename GLOB '[0-9][0-9][0-9][0-9].jpg'`
+).get().c > 0;
+
+if (existingCount !== 51 || usesOldStyleNames) {
   if (existingCount > 0) {
-    console.log(`[seed] detected ${existingCount} vehicles (need 51); re-seeding...`);
+    console.log(`[seed] detected ${existingCount} vehicles, old-names=${usesOldStyleNames}; re-seeding...`);
   }
   try {
     const { seedDatabase } = require('./seed/seed');
