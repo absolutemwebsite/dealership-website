@@ -25,6 +25,26 @@ for (const d of [DATA_DIR, UPLOADS_DIR]) fs.mkdirSync(d, { recursive: true });
 const DB_PATH = path.join(DATA_DIR, 'dealership.db');
 
 // ---------------------------------------------------------------------------
+//  Seed recovery: if the configured paths are empty (e.g. Railway volume at
+//  /app/storage shadows the repo's data), copy the seeded DB from ./seed/.
+//  The seed DB is tracked in git (~254 KB).
+// ---------------------------------------------------------------------------
+function seedIfEmpty() {
+  if (countVehicles(DB_PATH) <= 0) {
+    const seedDb = path.join(__dirname, 'seed', 'dealership.db');
+    if (fs.existsSync(seedDb)) {
+      try {
+        const src = new Database(seedDb, { readonly: true });
+        src.pragma('wal_checkpoint(TRUNCATE)');
+        src.close();
+        fs.copyFileSync(seedDb, DB_PATH);
+        console.log(`[seed] database adopted from seed/`);
+      } catch (e) { console.warn('[seed] DB copy failed:', e.message); }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 //  Auto-recovery: if configured DB is empty/missing, adopt the richest DB
 //  found at known alternate locations (protects against volume path changes).
 // ---------------------------------------------------------------------------
@@ -41,11 +61,15 @@ function autoRecoverDatabase() {
   const here = countVehicles(DB_PATH);
   if (here > 0) return; // already have data
 
+  const SEED_PATH = path.join(__dirname, 'seed', 'dealership.db');
+
   const candidates = [
     ...globSafe('/app/storage/data'),
     ...globSafe('/app/storage'),
     ...globSafe('/app/data'),
     ...globSafe(path.join(__dirname, 'storage', 'data')),
+    // Seed DB lives outside the volume mount so Railway volumes can't shadow it
+    ...(fs.existsSync(SEED_PATH) ? [SEED_PATH] : []),
   ].filter(f => f !== DB_PATH);
 
   let best = null, bestCount = 0;
@@ -69,6 +93,7 @@ function globSafe(dir) {
   catch { return []; }
 }
 autoRecoverDatabase();
+seedIfEmpty();
 
 // ---------------------------------------------------------------------------
 //  Database + schema

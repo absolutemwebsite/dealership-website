@@ -1,6 +1,5 @@
 node_modules/
 .env
-storage/data/*.db-wal
-storage/data/*.db-shm
+storage/
 *.log
 .DS_Store
