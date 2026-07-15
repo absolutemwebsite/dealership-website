@@ -87,7 +87,7 @@ async function genSticker() {
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Window Sticker — ${v.year} ${v.make} ${v.model}</title>
 <style>
   @page{size:letter;margin:.4in}*{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#0a0a0a}
+  body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#0a0a0a;background:#fff;color-scheme:only light}
   .page{min-height:10in;display:flex;flex-direction:column;border:2px solid #0a0a0a;padding:.25in}
   .hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #0a0a0a;padding-bottom:8px;margin-bottom:10px}
   .hdr img{height:100px}.hdr-phone{font-size:40pt;font-weight:900}
@@ -218,11 +218,11 @@ function updateBOSTots() {
   const doc = g('bos-fdoc'), levy = g('bos-flevy'), lien = g('bos-flien');
   const down = g('bos-fdown'), dep = g('bos-fdep'), cc = g('bos-fcc');
   const diff = price + warr - trade;
-  const sub = diff + doc + levy + lien;
+  const sub = diff + doc + levy + lien + cc;
   const gstR = DOCS_CFG.gstRate||0.05, pstR = DOCS_CFG.pstRate||0.07;
   const gst = Math.round(sub*gstR), pst = Math.round(sub*pstR);
   const total = sub + gst + pst;
-  const bal = total - down - dep - cc;
+  const bal = total - down - dep;
   document.getElementById('bos-tdiff').textContent = '$'+diff.toLocaleString();
   document.getElementById('bos-tsub').textContent = '$'+sub.toLocaleString();
   document.getElementById('bos-tgst').textContent = '$'+gst.toLocaleString();
@@ -246,17 +246,17 @@ async function genBOS() {
     const price=gn('bos-fprice'),warr=gn('bos-fwarr'),trade=gn('bos-ftrade');
     const doc=gn('bos-fdoc'),levy=gn('bos-flevy'),lien=gn('bos-flien');
     const down=gn('bos-fdown'),dep=gn('bos-fdep'),cc=gn('bos-fcc');
-    const diff=price+warr-trade,sub=diff+doc+levy+lien;
+    const diff=price+warr-trade,sub=diff+doc+levy+lien+cc;
     const gstR=cfg.gstRate||0.05,pstR=cfg.pstRate||0.07;
     const gst=Math.round(sub*gstR),pst=Math.round(sub*pstR);
-    const total=sub+gst+pst,bal=total-down-dep-cc;
+    const total=sub+gst+pst,bal=total-down-dep;
     const logo=LOGO_B64;
 
     const w = window.open('','_blank','width=900,height=1100');
     w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill of Sale — ${v.year} ${v.make} ${v.model}</title>
 <style>
   @page{size:letter;margin:.25in}*{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:7pt;color:#0a0a0a}
+  body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:7pt;color:#0a0a0a;background:#fff;color-scheme:only light}
   .banner{text-align:center;font-weight:900;font-size:8pt;border:1.5px solid #0a0a0a;padding:2px 0;margin-bottom:4px}
   .hdr{display:flex;align-items:center;border:1.5px solid #0a0a0a;padding:4px 6px;margin-bottom:4px}
   .hdr img{height:50px}.hdr-l{font-size:6.5pt}.hdr-r{margin-left:auto;text-align:right;font-size:6pt}
@@ -362,7 +362,7 @@ function genWaiver(v) {
   const w = window.open('','_blank','width=850,height=1100');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Delivery Waiver</title>
 <style>
-  @page{size:letter;margin:.5in}body{font-family:Georgia,serif;font-size:11pt;color:#0a0a0a;line-height:1.5}
+  @page{size:letter;margin:.5in}body{font-family:Georgia,serif;font-size:11pt;color:#0a0a0a;background:#fff;color-scheme:only light;line-height:1.5}
   h2{font-size:16pt;text-align:center;margin-bottom:16px}
   .vbox{background:#f5f5f5;border-left:4px solid #0a0a0a;padding:6px 10px;margin-bottom:14px;font-size:10pt}
   .wtext{margin-bottom:10px;font-size:10pt}
